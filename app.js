@@ -25,8 +25,18 @@ const elements = {
     cancelBtn: document.getElementById('cancelBtn'),
     photoInput: document.getElementById('photo'),
     photoPreview: document.getElementById('photoPreview'),
-    cameraBtn: document.getElementById('cameraBtn')
+    cameraBtn: document.getElementById('cameraBtn'),
+    cameraModal: document.getElementById('cameraModal'),
+    cameraVideo: document.getElementById('cameraVideo'),
+    cameraCanvas: document.getElementById('cameraCanvas'),
+    captureBtn: document.getElementById('captureBtn'),
+    closeCameraBtn: document.getElementById('closeCameraBtn'),
+    closeCameraModal: document.querySelector('.close-camera-modal')
 };
+
+// Camera state
+let cameraStream = null;
+let capturedPhotoBlob = null;
 
 // Initialize the application
 async function init() {
@@ -100,6 +110,18 @@ function setupEventListeners() {
     // Camera button click
     elements.cameraBtn.addEventListener('click', openCamera);
 
+    // Camera modal controls
+    elements.captureBtn.addEventListener('click', capturePhoto);
+    elements.closeCameraBtn.addEventListener('click', closeCamera);
+    elements.closeCameraModal.addEventListener('click', closeCamera);
+
+    // Close camera modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === elements.cameraModal) {
+            closeCamera();
+        }
+    });
+
     // Form submission
     elements.postFoodForm.addEventListener('submit', handleFormSubmit);
 }
@@ -129,20 +151,19 @@ function filterEvents() {
 
     // Apply search filter
     if (state.searchQuery) {
-        filtered = filtered.filter(event =>
-            event.event_name.toLowerCase().includes(state.searchQuery) ||
-            (event.building && event.building.toLowerCase().includes(state.searchQuery)) ||
-            (event.room_number && event.room_number.toLowerCase().includes(state.searchQuery)) ||
-            (event.cuisine && event.cuisine.toLowerCase().includes(state.searchQuery)) ||
-            (event.diet_type && event.diet_type.toLowerCase().includes(state.searchQuery))
-        );
         filtered = filtered.filter(event => {
             const eventName = (event.event_name || event.title || '').toLowerCase();
+            const placeName = (event.place_name || '').toLowerCase();
+            const cuisine = (event.cuisine || '').toLowerCase();
+            const dietType = (event.diet_type || '').toLowerCase();
             const locationStr = typeof event.location === 'string'
                 ? event.location.toLowerCase()
                 : '';
             const description = (event.description || '').toLowerCase();
             return eventName.includes(state.searchQuery) ||
+                   placeName.includes(state.searchQuery) ||
+                   cuisine.includes(state.searchQuery) ||
+                   dietType.includes(state.searchQuery) ||
                    locationStr.includes(state.searchQuery) ||
                    description.includes(state.searchQuery);
         });
@@ -202,9 +223,11 @@ function renderEvents() {
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
         const timeStr = event.event_time ? escapeHtml(event.event_time) : 'Time TBD';
-        const location = event.building && event.room_number
-            ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
-            : event.building || event.room_number || 'Location not specified';
+        // Use place_name if available, otherwise fall back to building/room_number
+        const location = event.place_name || 
+            (event.building && event.room_number
+                ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
+                : event.building || event.room_number || 'Location not specified');
 
         const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
@@ -681,9 +704,89 @@ function closeModal() {
 }
 
 // Open camera to take a photo
-function openCamera() {
-    // Trigger the file input click, which will open camera on mobile devices
-    elements.photoInput.click();
+async function openCamera() {
+    try {
+        // Request camera access
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }, // Use rear camera on mobile
+            audio: false
+        });
+
+        // Show the camera modal
+        elements.cameraModal.style.display = 'flex';
+
+        // Set the video stream
+        elements.cameraVideo.srcObject = cameraStream;
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        if (error.name === 'NotAllowedError') {
+            alert('Camera access was denied. Please allow camera access to take photos.');
+        } else if (error.name === 'NotFoundError') {
+            alert('No camera found on this device.');
+        } else {
+            alert('Unable to access camera: ' + error.message);
+        }
+    }
+}
+
+// Capture photo from camera stream
+function capturePhoto() {
+    if (!cameraStream) return;
+
+    // Set canvas size to match video
+    const video = elements.cameraVideo;
+    const canvas = elements.cameraCanvas;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw current video frame to canvas
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+        if (!blob) {
+            alert('Failed to capture photo');
+            return;
+        }
+
+        // Store the blob
+        capturedPhotoBlob = blob;
+
+        // Create a File object from the blob
+        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+
+        // Create a DataTransfer object to set the file input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        elements.photoInput.files = dataTransfer.files;
+
+        // Trigger the change event to show preview
+        const event = new Event('change', { bubbles: true });
+        elements.photoInput.dispatchEvent(event);
+
+        // Close the camera
+        closeCamera();
+    }, 'image/jpeg', 0.9);
+}
+
+// Close camera and stop stream
+function closeCamera() {
+    // Stop all tracks in the stream
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+
+    // Clear video source
+    if (elements.cameraVideo) {
+        elements.cameraVideo.srcObject = null;
+    }
+
+    // Hide the camera modal
+    if (elements.cameraModal) {
+        elements.cameraModal.style.display = 'none';
+    }
 }
 
 // Handle photo selection
@@ -721,13 +824,71 @@ function getBase64FromFile(file) {
     });
 }
 
+// Geocode a place name to coordinates using Google Maps API
+// Restricts search to Princeton University area
+async function geocodePlaceName(placeName) {
+    if (!placeName || !google || !google.maps) {
+        return null;
+    }
+
+    return new Promise((resolve) => {
+        const geocoder = new google.maps.Geocoder();
+
+        // Princeton University coordinates for biasing results
+        const princetonCenter = { lat: 40.3430, lng: -74.6551 };
+
+        // Geocode with bias towards Princeton
+        geocoder.geocode({
+            address: `${placeName}, Princeton University, Princeton, NJ`,
+            componentRestrictions: {
+                country: 'US',
+                administrativeArea: 'NJ',
+                locality: 'Princeton'
+            },
+            bounds: {
+                north: 40.3530,
+                south: 40.3330,
+                east: -74.6451,
+                west: -74.6651
+            }
+        }, (results, status) => {
+            if (status === 'OK' && results && results.length > 0) {
+                const location = results[0].geometry.location;
+                const coords = {
+                    lat: location.lat(),
+                    lng: location.lng()
+                };
+
+                // Validate that the result is actually near Princeton (within ~5 miles)
+                const distanceFromPrinceton = calculateDistance(
+                    princetonCenter.lat,
+                    princetonCenter.lng,
+                    coords.lat,
+                    coords.lng
+                );
+
+                if (distanceFromPrinceton < 5) {
+                    console.log(`Geocoded "${placeName}" to:`, coords);
+                    resolve(coords);
+                } else {
+                    console.warn(`Geocoded location for "${placeName}" is too far from Princeton (${distanceFromPrinceton.toFixed(1)} miles)`);
+                    resolve(null);
+                }
+            } else {
+                console.warn(`Geocoding failed for "${placeName}":`, status);
+                resolve(null);
+            }
+        });
+    });
+}
+
 // Handle form submission
 async function handleFormSubmit(e) {
     e.preventDefault();
 
     const formData = new FormData(e.target);
     const eventName = formData.get('eventName');
-    const building = formData.get('building');
+    const placeName = formData.get('placeName');
     const roomNumber = formData.get('roomNumber');
     const cuisine = formData.get('cuisine');
     const dietType = formData.get('dietType');
@@ -746,15 +907,41 @@ async function handleFormSubmit(e) {
             photoBase64 = await getBase64FromFile(photoFile);
         }
 
+        // Combine place name and room number
+        let combinedPlaceName = placeName || '';
+        if (roomNumber && roomNumber.trim()) {
+            if (combinedPlaceName) {
+                combinedPlaceName += `, Room ${roomNumber.trim()}`;
+            } else {
+                combinedPlaceName = `Room ${roomNumber.trim()}`;
+            }
+        }
+
+        // Geocode the place name to get actual Princeton coordinates
+        let eventLocation = null;
+        if (placeName) {
+            eventLocation = await geocodePlaceName(placeName);
+            if (!eventLocation) {
+                // Fallback: try just the building name without "Princeton University"
+                console.log('Retrying geocoding with simpler query...');
+                eventLocation = await geocodePlaceName(`${placeName}, Princeton, NJ`);
+            }
+        }
+
+        // If geocoding fails, fall back to user's current location
+        if (!eventLocation) {
+            console.warn('Geocoding failed, using user location as fallback');
+            eventLocation = state.userLocation;
+        }
+
         // Prepare data for API
         const eventData = {
             event_name: eventName,
-            building: building,
-            room_number: roomNumber,
+            place_name: combinedPlaceName || null,
             cuisine: cuisine || null,
             diet_type: dietType || null,
             photo: photoBase64,
-            location: state.userLocation || null
+            location: eventLocation || null
         };
 
         // Submit to API

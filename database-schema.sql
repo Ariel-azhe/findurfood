@@ -6,8 +6,7 @@ CREATE TABLE IF NOT EXISTS free_food_events (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     event_name TEXT NOT NULL,
     building TEXT, -- Building name/location (e.g., "Frist Campus Center")
-    room_number TEXT, -- Room number (e.g., "201", "Main Hall")
-    place_name TEXT, -- Place name/location identifier
+    place_name TEXT, -- Place name/location identifier (can include room number, e.g., "Frist Campus Center, Room 201")
     diet_type TEXT, -- e.g., "vegetarian", "vegan", "gluten-free", null for no restrictions
     cuisine TEXT, -- e.g., "Thai", "Mexican", "Italian", null if not specified
     location JSONB, -- Optional: Stores { "lat": number, "lng": number } for map display
@@ -32,9 +31,6 @@ CREATE INDEX IF NOT EXISTS idx_free_food_events_cuisine ON free_food_events(cuis
 
 -- Create index on building for filtering
 CREATE INDEX IF NOT EXISTS idx_free_food_events_building ON free_food_events(building);
-
--- Create index on room_number for filtering
-CREATE INDEX IF NOT EXISTS idx_free_food_events_room_number ON free_food_events(room_number);
 
 -- Create index on place_name for filtering
 CREATE INDEX IF NOT EXISTS idx_free_food_events_place_name ON free_food_events(place_name);
