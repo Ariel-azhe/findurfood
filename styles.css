@@ -96,7 +96,7 @@ main {
 }
 
 .sort-dropdown {
-    padding: 10px 15px;
+    padding: 10px 35px 10px 15px;
     border: 2px solid #ede8e3;
     border-radius: 8px;
     font-size: 0.95rem;
@@ -106,12 +106,37 @@ main {
     transition: all 0.3s;
     min-width: 180px;
     font-family: 'Lato', sans-serif;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FF8F00' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.sort-dropdown:hover {
+    border-color: #FF8F00;
+    background-color: #fff8f0;
 }
 
 .sort-dropdown:focus {
     outline: none;
     border-color: #FF8F00; /* Princeton Orange */
     box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.1);
+}
+
+.sort-dropdown option {
+    background: #fffdfb;
+    color: #333;
+    padding: 12px 16px;
+    font-family: 'Lato', sans-serif;
+}
+
+.sort-dropdown option:hover,
+.sort-dropdown option:focus,
+.sort-dropdown option:checked {
+    background: linear-gradient(135deg, #FF8F00 0%, #FFB74D 100%);
+    color: white;
 }
 
 .search-bar input {
@@ -486,12 +511,31 @@ footer {
 .form-group input[type="text"],
 .form-group select {
     width: 100%;
-    padding: 12px 16px;
+    padding: 12px 35px 12px 16px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     font-size: 1rem;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
     font-family: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: #fffdfb;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FF8F00' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+}
+
+.form-group input[type="text"] {
+    padding: 12px 16px;
+    background-image: none;
+    cursor: text;
+}
+
+.form-group select:hover {
+    border-color: #FF8F00;
+    background-color: #fff8f0;
 }
 
 .form-group input[type="text"]:focus,
@@ -499,6 +543,20 @@ footer {
     outline: none;
     border-color: #FF8F00; /* Princeton Orange */
     box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.1);
+}
+
+.form-group select option {
+    background: #fffdfb;
+    color: #333;
+    padding: 12px 16px;
+    font-family: 'Lato', sans-serif;
+}
+
+.form-group select option:hover,
+.form-group select option:focus,
+.form-group select option:checked {
+    background: linear-gradient(135deg, #FF8F00 0%, #FFB74D 100%);
+    color: white;
 }
 
 .form-group small {
