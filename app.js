@@ -25,8 +25,18 @@ const elements = {
     cancelBtn: document.getElementById('cancelBtn'),
     photoInput: document.getElementById('photo'),
     photoPreview: document.getElementById('photoPreview'),
-    cameraBtn: document.getElementById('cameraBtn')
+    cameraBtn: document.getElementById('cameraBtn'),
+    cameraModal: document.getElementById('cameraModal'),
+    cameraVideo: document.getElementById('cameraVideo'),
+    cameraCanvas: document.getElementById('cameraCanvas'),
+    captureBtn: document.getElementById('captureBtn'),
+    closeCameraBtn: document.getElementById('closeCameraBtn'),
+    closeCameraModal: document.querySelector('.close-camera-modal')
 };
+
+// Camera state
+let cameraStream = null;
+let capturedPhotoBlob = null;
 
 // Initialize the application
 async function init() {
@@ -109,6 +119,18 @@ function setupEventListeners() {
 
     // Camera button click
     elements.cameraBtn.addEventListener('click', openCamera);
+
+    // Camera modal controls
+    elements.captureBtn.addEventListener('click', capturePhoto);
+    elements.closeCameraBtn.addEventListener('click', closeCamera);
+    elements.closeCameraModal.addEventListener('click', closeCamera);
+
+    // Close camera modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === elements.cameraModal) {
+            closeCamera();
+        }
+    });
 
     // Form submission
     elements.postFoodForm.addEventListener('submit', handleFormSubmit);
@@ -667,9 +689,89 @@ function closeModal() {
 }
 
 // Open camera to take a photo
-function openCamera() {
-    // Trigger the file input click, which will open camera on mobile devices
-    elements.photoInput.click();
+async function openCamera() {
+    try {
+        // Request camera access
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }, // Use rear camera on mobile
+            audio: false
+        });
+
+        // Show the camera modal
+        elements.cameraModal.style.display = 'flex';
+
+        // Set the video stream
+        elements.cameraVideo.srcObject = cameraStream;
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        if (error.name === 'NotAllowedError') {
+            alert('Camera access was denied. Please allow camera access to take photos.');
+        } else if (error.name === 'NotFoundError') {
+            alert('No camera found on this device.');
+        } else {
+            alert('Unable to access camera: ' + error.message);
+        }
+    }
+}
+
+// Capture photo from camera stream
+function capturePhoto() {
+    if (!cameraStream) return;
+
+    // Set canvas size to match video
+    const video = elements.cameraVideo;
+    const canvas = elements.cameraCanvas;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // Draw current video frame to canvas
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Convert canvas to blob
+    canvas.toBlob((blob) => {
+        if (!blob) {
+            alert('Failed to capture photo');
+            return;
+        }
+
+        // Store the blob
+        capturedPhotoBlob = blob;
+
+        // Create a File object from the blob
+        const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+
+        // Create a DataTransfer object to set the file input
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        elements.photoInput.files = dataTransfer.files;
+
+        // Trigger the change event to show preview
+        const event = new Event('change', { bubbles: true });
+        elements.photoInput.dispatchEvent(event);
+
+        // Close the camera
+        closeCamera();
+    }, 'image/jpeg', 0.9);
+}
+
+// Close camera and stop stream
+function closeCamera() {
+    // Stop all tracks in the stream
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+
+    // Clear video source
+    if (elements.cameraVideo) {
+        elements.cameraVideo.srcObject = null;
+    }
+
+    // Hide the camera modal
+    if (elements.cameraModal) {
+        elements.cameraModal.style.display = 'none';
+    }
 }
 
 // Handle photo selection

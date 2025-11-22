@@ -618,3 +618,80 @@ footer {
     font-style: italic;
 }
 
+/* Camera Modal Styles */
+.camera-modal {
+    z-index: 2000; /* Higher than other modals */
+}
+
+.camera-modal-content {
+    max-width: 800px;
+    max-height: 95vh;
+}
+
+.camera-container {
+    padding: 20px;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+#cameraVideo {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px 30px;
+    background: white;
+}
+
+.camera-controls .btn-primary,
+.camera-controls .btn-secondary {
+    flex: 1;
+    max-width: 200px;
+}
+
+.close-camera-modal {
+    font-size: 2rem;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.3s;
+}
+
+.close-camera-modal:hover {
+    color: #333;
+}
+
+/* Responsive camera modal */
+@media (max-width: 600px) {
+    .camera-modal-content {
+        max-width: 95vw;
+        margin: 10px;
+    }
+
+    .camera-container {
+        min-height: 300px;
+        padding: 15px;
+    }
+
+    .camera-controls {
+        flex-direction: column;
+        padding: 15px 20px;
+    }
+
+    .camera-controls .btn-primary,
+    .camera-controls .btn-secondary {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
