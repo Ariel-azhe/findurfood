@@ -3,6 +3,8 @@ const state = {
     events: [],
     filteredEvents: [],
     searchQuery: '',
+    selectedDietType: '', // Selected diet type filter
+    selectedCuisine: '', // Selected cuisine filter
     sortBy: 'time-asc', // Default sort by time ascending
     map: null,
     markers: [], // Store Google Maps markers for events
@@ -19,6 +21,8 @@ const elements = {
     eventsList: document.getElementById('eventsList'),
     map: document.getElementById('map'),
     sortBy: document.getElementById('sortBy'),
+    dietTypeFilter: document.getElementById('dietTypeFilter'),
+    cuisineFilter: document.getElementById('cuisineFilter'),
     postFoodBtn: document.getElementById('postFoodBtn'),
     postFoodModal: document.getElementById('postFoodModal'),
     postFoodForm: document.getElementById('postFoodForm'),
@@ -85,6 +89,20 @@ function setupEventListeners() {
     // Sort dropdown
     elements.sortBy.addEventListener('change', (e) => {
         state.sortBy = e.target.value;
+        filterEvents();
+        renderEvents();
+    });
+
+    // Diet Type filter
+    elements.dietTypeFilter.addEventListener('change', (e) => {
+        state.selectedDietType = e.target.value;
+        filterEvents();
+        renderEvents();
+    });
+
+    // Cuisine filter
+    elements.cuisineFilter.addEventListener('change', (e) => {
+        state.selectedCuisine = e.target.value;
         filterEvents();
         renderEvents();
     });
@@ -172,12 +190,65 @@ async function loadEvents() {
         const events = await response.json();
         state.events = events;
         state.filteredEvents = [...state.events];
+        
+        // Populate filter dropdowns with unique values
+        populateFilterDropdowns();
+        
         updateMapMarkers(); // Update markers when events load
     } catch (error) {
         console.error('Error loading events:', error);
         // Fallback to empty array on error
         state.events = [];
         state.filteredEvents = [];
+    }
+}
+
+// Populate filter dropdowns with unique diet types and cuisines
+function populateFilterDropdowns() {
+    // Get unique diet types
+    const dietTypes = [...new Set(state.events
+        .map(event => event.diet_type)
+        .filter(dt => dt && dt.trim() !== ''))].sort();
+    
+    // Get unique cuisines
+    const cuisines = [...new Set(state.events
+        .map(event => event.cuisine)
+        .filter(c => c && c.trim() !== ''))].sort();
+    
+    // Populate diet type filter
+    const dietTypeFilter = elements.dietTypeFilter;
+    if (dietTypeFilter) {
+        // Keep the "All Diet Types" option and add unique values
+        const currentValue = dietTypeFilter.value;
+        dietTypeFilter.innerHTML = '<option value="">All Diet Types</option>';
+        dietTypes.forEach(dietType => {
+            const option = document.createElement('option');
+            option.value = dietType;
+            option.textContent = capitalizeFirst(dietType);
+            dietTypeFilter.appendChild(option);
+        });
+        // Restore previous selection if it still exists
+        if (currentValue && dietTypes.includes(currentValue)) {
+            dietTypeFilter.value = currentValue;
+        }
+    }
+    
+    // Populate cuisine filter
+    const cuisineFilter = elements.cuisineFilter;
+    if (cuisineFilter) {
+        // Keep the "All Cuisines" option and add unique values
+        const currentValue = cuisineFilter.value;
+        cuisineFilter.innerHTML = '<option value="">All Cuisines</option>';
+        cuisines.forEach(cuisine => {
+            const option = document.createElement('option');
+            option.value = cuisine;
+            option.textContent = capitalizeFirst(cuisine);
+            cuisineFilter.appendChild(option);
+        });
+        // Restore previous selection if it still exists
+        if (currentValue && cuisines.includes(currentValue)) {
+            cuisineFilter.value = currentValue;
+        }
     }
 }
 
@@ -307,6 +378,22 @@ function showDeleteConfirmModal(eventName, onConfirm, onCancel) {
 // Filter events based on current filter and search query
 function filterEvents() {
     let filtered = [...state.events];
+
+    // Apply diet type filter
+    if (state.selectedDietType) {
+        filtered = filtered.filter(event => {
+            const eventDietType = (event.diet_type || '').toLowerCase();
+            return eventDietType === state.selectedDietType.toLowerCase();
+        });
+    }
+
+    // Apply cuisine filter
+    if (state.selectedCuisine) {
+        filtered = filtered.filter(event => {
+            const eventCuisine = (event.cuisine || '').toLowerCase();
+            return eventCuisine === state.selectedCuisine.toLowerCase();
+        });
+    }
 
     // Apply search filter
     if (state.searchQuery) {
