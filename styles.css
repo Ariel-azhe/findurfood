@@ -31,20 +31,10 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
 }
 
 .logo-full {
-    max-width: 350px;
-    height: auto;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-    transition: transform 0.3s ease;
-    background: transparent;
-    mix-blend-mode: normal;
-}
-
-.logo-full:hover {
-    transform: scale(1.05);
+    height: 120px;
 }
 
 header h1 {
@@ -597,12 +587,8 @@ footer {
 }
 
 @media (max-width: 600px) {
-    .logo-container {
-        padding: 0 10px;
-    }
-
     .logo-full {
-        max-width: 280px;
+        height: 80px;
     }
 
     .controls {
