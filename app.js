@@ -578,6 +578,7 @@ function updateMapMarkers() {
         // Create info window content with all Supabase data
         const infoContent = `
             <div style="padding: 12px; min-width: 220px; font-family: Arial, sans-serif;">
+                ${event.photo ? `<img src="${event.photo}" alt="Food Photo" style="width: 100%; max-width: 280px; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">` : ''}
                 <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #333; font-weight: bold;">${escapeHtml(event.event_name)}</h3>
                 ${event.cuisine ? `<p style="margin: 6px 0; color: #555; font-size: 14px;"><strong>Cuisine:</strong> ${escapeHtml(event.cuisine)}</p>` : ''}
                 ${event.diet_type ? `<p style="margin: 6px 0; color: #555; font-size: 14px;"><strong>Diet Type:</strong> ${escapeHtml(event.diet_type)}</p>` : ''}
@@ -964,6 +965,14 @@ async function handleFormSubmit(e) {
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Posting...';
         submitBtn.disabled = true;
+
+        // Validate photo is provided (mandatory field)
+        if (!photoFile || photoFile.size === 0) {
+            alert('Please take a photo of the free food. Photo is required.');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            return;
+        }
 
         // Convert photo to base64 if provided
         let photoBase64 = null;
