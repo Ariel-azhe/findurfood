@@ -172,14 +172,15 @@
                         <input type="text" id="cuisine" name="cuisine" placeholder="e.g., Italian, Mexican">
                     </div>
                     <div class="form-group">
-                        <label for="dietType">Diet Type</label>
-                        <select id="dietType" name="dietType">
-                            <option value="">None</option>
+                        <label for="dietType">Diet Type *</label>
+                        <select id="dietType" name="dietType" required>
+                            <option value="">Select diet type</option>
                             <option value="vegetarian">Vegetarian</option>
                             <option value="vegan">Vegan</option>
                             <option value="gluten-free">Gluten-Free</option>
                             <option value="halal">Halal</option>
                             <option value="kosher">Kosher</option>
+                            <option value="no-restriction">No Restriction</option>
                         </select>
                     </div>
                 </div>
