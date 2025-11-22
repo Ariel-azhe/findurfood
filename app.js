@@ -211,8 +211,8 @@ function renderEvents() {
             ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
             : event.building || event.room_number || 'Location not specified';
 
-        const cuisine = event.cuisine ? `<span class="event-tag">${escapeHtml(event.cuisine)}</span>` : '';
-        const dietType = event.diet_type ? `<span class="event-tag">${escapeHtml(event.diet_type)}</span>` : '';
+        const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(event.cuisine)}</span>` : '';
+        const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(event.diet_type)}</span>` : '';
         const photo = event.photo ? `<img src="${event.photo}" alt="${escapeHtml(event.event_name)}" class="event-photo">` : '';
         // Support both event_name (backend) and title (frontend)
         const title = event.event_name || event.title || 'Untitled Event';
@@ -237,7 +237,7 @@ function renderEvents() {
                     </div>
                 </div>
                 <p class="event-location">📍 ${location}</p>
-                <div class="event-tags">${cuisine}${dietType}</div>
+                <div class="event-tags">${dietType}${cuisine}</div>
                 ${description ? `<p class="event-description">${escapeHtml(description)}</p>` : ''}
             </div>
         `;
