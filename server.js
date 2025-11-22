@@ -86,8 +86,6 @@ app.post('/api/events', async (req, res) => {
             .insert([
                 {
                     event_name,
-                    building: building || null,
-                    room_number: room_number || null,
                     place_name: place_name || null,
                     diet_type,
                     cuisine: cuisine || null,
@@ -132,15 +130,12 @@ app.put('/api/events/:id', async (req, res) => {
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
         if (place_name !== undefined) updateData.place_name = place_name;
-        if (building !== undefined) updateData.building = building;
-        if (room_number !== undefined) updateData.room_number = room_number;
         if (diet_type !== undefined) updateData.diet_type = diet_type;
         if (cuisine !== undefined) updateData.cuisine = cuisine;
         if (location !== undefined) updateData.location = location;
         if (photo !== undefined) updateData.photo = photo;
         if (event_time !== undefined) updateData.event_time = event_time;
         if (description !== undefined) updateData.description = description;
-        if (place_name !== undefined) updateData.place_name = place_name;
         if (food_percentage !== undefined) {
             const percentage = parseInt(food_percentage);
             // Validate percentage is between 0 and 100

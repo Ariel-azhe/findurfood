@@ -381,11 +381,10 @@ function renderEvents() {
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
         const timeStr = event.event_time ? escapeHtml(event.event_time) : formatUploadTime(event.created_at);
-        // Use place_name if available, otherwise fall back to building/room_number
-        const location = event.place_name || 
-            (event.building && event.room_number
-                ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
-                : event.building || event.room_number || 'Location not specified');
+        const relativeTime = event.created_at ? getRelativeTime(event.created_at) : '';
+        const timeDisplay = relativeTime ? `${timeStr}<br><small>Since ${relativeTime}</small>` : timeStr;
+        // Use place_name
+        const location = event.place_name || 'Location not specified';
 
         const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
@@ -432,7 +431,7 @@ function renderEvents() {
                 <div class="event-header">
                     <h3>${escapeHtml(title)}</h3>
                     <div class="event-meta">
-                        <span class="event-time">${timeStr}</span>
+                        <span class="event-time">${timeDisplay}</span>
                         ${distanceBadge}
                     </div>
                 </div>
@@ -739,6 +738,32 @@ function formatUploadTime(timestamp) {
     return `${hours}:${minutesStr}${ampm}`;
 }
 
+// Calculate relative time (e.g., "10 minutes ago", "2 hours ago")
+function getRelativeTime(timestamp) {
+    if (!timestamp) return '';
+
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now - past;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    if (diffWeeks === 1) return '1 week ago';
+    return `${diffWeeks} weeks ago`;
+}
+
 // Convert time string (e.g., "9:00PM") to minutes for sorting
 function timeToMinutes(timeStr) {
     if (!timeStr) return Infinity; // Events without time go to end
@@ -879,7 +904,10 @@ function initMap() {
 
     // If user location is already available, add marker
     if (state.userLocation) {
+        console.log('Map initialized - adding user location marker');
         updateUserLocationMarker();
+    } else {
+        console.log('Map initialized - waiting for user location');
     }
 
     // If events are already loaded, add markers now
@@ -890,14 +918,19 @@ function initMap() {
 
 // Update user location marker on the map
 function updateUserLocationMarker() {
-    if (!state.map || !state.userLocation) return;
+    if (!state.map || !state.userLocation) {
+        console.log('Cannot update user location marker - map or location not available');
+        return;
+    }
+
+    console.log('Updating user location marker at:', state.userLocation);
 
     // Remove existing user location marker if it exists
     if (state.userLocationMarker) {
         state.userLocationMarker.setMap(null);
     }
 
-    // Use Google's default red pin marker for user location
+    // Create a blue dot marker for user location (like Google Maps "You are here")
     state.userLocationMarker = new google.maps.Marker({
         position: {
             lat: state.userLocation.lat,
@@ -905,21 +938,29 @@ function updateUserLocationMarker() {
         },
         map: state.map,
         title: 'Your Location',
-        // Use default Google Maps red pin icon (null = default)
-        icon: null,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#4285F4', // Google blue
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 3
+        },
         zIndex: 2000, // Above event markers
         animation: google.maps.Animation.DROP
     });
 
     // Create info window
     const infoWindow = new google.maps.InfoWindow({
-        content: '<div style="padding: 8px; font-weight: bold;">📍 You are here</div>'
+        content: '<div style="padding: 8px; font-weight: bold; font-family: Lato, sans-serif;">📍 You are here</div>'
     });
 
     // Show info window on click
     state.userLocationMarker.addListener('click', () => {
         infoWindow.open(state.map, state.userLocationMarker);
     });
+
+    console.log('User location marker added to map');
 }
 
 // Update map markers based on filtered events
@@ -974,6 +1015,7 @@ function updateMapMarkers() {
         // Create info window content with all Supabase data
         const infoContent = `
             <div style="padding: 12px; min-width: 220px; font-family: Arial, sans-serif;">
+                ${event.photo ? `<img src="${event.photo}" alt="Food Photo" style="width: 100%; max-width: 280px; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">` : ''}
                 <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #333; font-weight: bold;">${escapeHtml(event.event_name)}</h3>
                 ${event.cuisine ? `<p style="margin: 6px 0; color: #555; font-size: 14px;"><strong>Cuisine:</strong> ${escapeHtml(event.cuisine)}</p>` : ''}
                 ${event.diet_type ? `<p style="margin: 6px 0; color: #555; font-size: 14px;"><strong>Diet Type:</strong> ${escapeHtml(event.diet_type)}</p>` : ''}
@@ -1444,11 +1486,37 @@ async function handleFormSubmit(e) {
     }
 }
 
+// Show location status message to user
+function showLocationStatus(message, isError = false) {
+    const statusEl = document.getElementById('locationStatus');
+    if (!statusEl) return;
+
+    if (!message) {
+        statusEl.style.display = 'none';
+        return;
+    }
+
+    statusEl.textContent = message;
+    statusEl.className = 'location-status' + (isError ? ' error' : '');
+    statusEl.style.display = 'block';
+
+    // Auto-hide success messages after 5 seconds
+    if (!isError) {
+        setTimeout(() => {
+            statusEl.style.display = 'none';
+        }, 5000);
+    }
+}
+
 // Request user's geolocation
 function getUserLocation() {
+    // Show requesting message
+    showLocationStatus('📍 Requesting your location for distance sorting...');
+
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
             state.locationError = 'Geolocation is not supported by your browser';
+            showLocationStatus('⚠️ Geolocation is not supported by your browser. Distance sorting disabled.', true);
             console.warn(state.locationError);
             resolve(null);
             return;
@@ -1462,26 +1530,39 @@ function getUserLocation() {
                 };
                 state.locationError = null;
                 console.log('User location obtained:', state.userLocation);
-                updateUserLocationMarker(); // Add marker to map
+                showLocationStatus('✅ Location detected! Distance sorting is now available.');
+
+                // Add marker to map if map is ready
+                if (state.map) {
+                    console.log('Map is ready - adding user location marker');
+                    updateUserLocationMarker();
+                } else {
+                    console.log('Map not ready yet - marker will be added when map initializes');
+                }
+
                 resolve(state.userLocation);
             },
             (error) => {
-                // Don't show error messages - location is optional
-                // Only log for debugging
+                let errorMessage = '';
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
+                        errorMessage = '⚠️ Location permission denied. Please enable location access in your browser settings to use distance sorting.';
                         console.log('Location permission denied - distance sorting disabled');
                         break;
                     case error.POSITION_UNAVAILABLE:
+                        errorMessage = '⚠️ Location unavailable. Distance sorting is disabled.';
                         console.log('Location unavailable - distance sorting disabled');
                         break;
                     case error.TIMEOUT:
+                        errorMessage = '⚠️ Location request timed out. Distance sorting is disabled.';
                         console.log('Location request timed out - distance sorting disabled');
                         break;
                     default:
+                        errorMessage = '⚠️ Unable to get your location. Distance sorting is disabled.';
                         console.log('Location error - distance sorting disabled');
                 }
-                state.locationError = null; // Don't set error, just silently fail
+                showLocationStatus(errorMessage, true);
+                state.locationError = null;
                 resolve(null);
             },
             {
