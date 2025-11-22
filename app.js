@@ -223,6 +223,8 @@ function renderEvents() {
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
         const timeStr = event.event_time ? escapeHtml(event.event_time) : formatUploadTime(event.created_at);
+        const relativeTime = event.created_at ? getRelativeTime(event.created_at) : '';
+        const timeDisplay = relativeTime ? `${timeStr}<br><small>Since ${relativeTime}</small>` : timeStr;
         // Use place_name if available, otherwise fall back to building/room_number
         const location = event.place_name || 
             (event.building && event.room_number
@@ -250,7 +252,7 @@ function renderEvents() {
                 <div class="event-header">
                     <h3>${escapeHtml(title)}</h3>
                     <div class="event-meta">
-                        <span class="event-time">${timeStr}</span>
+                        <span class="event-time">${timeDisplay}</span>
                         ${distanceBadge}
                     </div>
                 </div>
@@ -297,6 +299,32 @@ function formatUploadTime(timestamp) {
     const minutesStr = minutes < 10 ? '0' + minutes : minutes;
 
     return `${hours}:${minutesStr}${ampm}`;
+}
+
+// Calculate relative time (e.g., "10 minutes ago", "2 hours ago")
+function getRelativeTime(timestamp) {
+    if (!timestamp) return '';
+
+    const now = new Date();
+    const past = new Date(timestamp);
+    const diffMs = now - past;
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins === 1) return '1 minute ago';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours === 1) return '1 hour ago';
+    if (diffHours < 24) return `${diffHours} hours ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+
+    const diffWeeks = Math.floor(diffDays / 7);
+    if (diffWeeks === 1) return '1 week ago';
+    return `${diffWeeks} weeks ago`;
 }
 
 // Convert time string (e.g., "9:00PM") to minutes for sorting
@@ -1002,11 +1030,37 @@ async function handleFormSubmit(e) {
     }
 }
 
+// Show location status message to user
+function showLocationStatus(message, isError = false) {
+    const statusEl = document.getElementById('locationStatus');
+    if (!statusEl) return;
+
+    if (!message) {
+        statusEl.style.display = 'none';
+        return;
+    }
+
+    statusEl.textContent = message;
+    statusEl.className = 'location-status' + (isError ? ' error' : '');
+    statusEl.style.display = 'block';
+
+    // Auto-hide success messages after 5 seconds
+    if (!isError) {
+        setTimeout(() => {
+            statusEl.style.display = 'none';
+        }, 5000);
+    }
+}
+
 // Request user's geolocation
 function getUserLocation() {
+    // Show requesting message
+    showLocationStatus('📍 Requesting your location for distance sorting...');
+
     return new Promise((resolve) => {
         if (!navigator.geolocation) {
             state.locationError = 'Geolocation is not supported by your browser';
+            showLocationStatus('⚠️ Geolocation is not supported by your browser. Distance sorting disabled.', true);
             console.warn(state.locationError);
             resolve(null);
             return;
@@ -1020,26 +1074,31 @@ function getUserLocation() {
                 };
                 state.locationError = null;
                 console.log('User location obtained:', state.userLocation);
+                showLocationStatus('✅ Location detected! Distance sorting is now available.');
                 updateUserLocationMarker(); // Add marker to map
                 resolve(state.userLocation);
             },
             (error) => {
-                // Don't show error messages - location is optional
-                // Only log for debugging
+                let errorMessage = '';
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
+                        errorMessage = '⚠️ Location permission denied. Please enable location access in your browser settings to use distance sorting.';
                         console.log('Location permission denied - distance sorting disabled');
                         break;
                     case error.POSITION_UNAVAILABLE:
+                        errorMessage = '⚠️ Location unavailable. Distance sorting is disabled.';
                         console.log('Location unavailable - distance sorting disabled');
                         break;
                     case error.TIMEOUT:
+                        errorMessage = '⚠️ Location request timed out. Distance sorting is disabled.';
                         console.log('Location request timed out - distance sorting disabled');
                         break;
                     default:
+                        errorMessage = '⚠️ Unable to get your location. Distance sorting is disabled.';
                         console.log('Location error - distance sorting disabled');
                 }
-                state.locationError = null; // Don't set error, just silently fail
+                showLocationStatus(errorMessage, true);
+                state.locationError = null;
                 resolve(null);
             },
             {

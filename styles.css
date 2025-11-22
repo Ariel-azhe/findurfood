@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: 'Fredoka', sans-serif;
     background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     min-height: 100vh;
     color: #333;
@@ -56,7 +56,7 @@ header h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
     letter-spacing: 1px;
     color: #FF8F00; /* Princeton Orange */
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 header h1 .highlight {
@@ -70,7 +70,7 @@ header h1 .highlight {
     font-weight: 400;
     letter-spacing: 2px;
     color: #ffffff;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
     text-transform: uppercase;
 }
 
@@ -118,7 +118,7 @@ main {
     cursor: pointer;
     transition: all 0.3s;
     min-width: 180px;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 .sort-dropdown:focus {
@@ -134,7 +134,7 @@ main {
     border-radius: 6px;
     font-size: 1rem;
     transition: all 0.3s;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 .search-bar input:focus {
@@ -158,7 +158,7 @@ main {
     font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.3s;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 .filter-btn:hover {
@@ -181,7 +181,7 @@ main {
     font-weight: 600;
     transition: all 0.3s;
     box-shadow: 0 2px 8px rgba(255, 143, 0, 0.3);
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
     letter-spacing: 0.5px;
 }
 
@@ -248,7 +248,7 @@ main {
     margin-bottom: 20px;
     color: #1a1a1a;
     font-size: 1.5rem;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
     font-weight: 600;
     border-bottom: 2px solid #FF8F00;
     padding-bottom: 10px;
@@ -294,7 +294,16 @@ main {
     color: #FF8F00; /* Princeton Orange */
     font-weight: 600;
     white-space: nowrap;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
+    line-height: 1.4;
+}
+
+.event-time small {
+    font-size: 0.75rem;
+    color: #999;
+    font-weight: 400;
+    display: block;
+    margin-top: 2px;
 }
 
 .event-meta {
@@ -498,7 +507,7 @@ footer {
     font-size: 0.95rem;
     font-weight: 500;
     transition: transform 0.2s, box-shadow 0.2s;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 .camera-btn:hover {
@@ -545,7 +554,7 @@ footer {
     background: #FF8F00; /* Princeton Orange */
     color: white;
     box-shadow: 0 2px 8px rgba(255, 143, 0, 0.3);
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -563,7 +572,7 @@ footer {
     background: white;
     color: #FF8F00; /* Princeton Orange */
     border: 2px solid #FF8F00;
-    font-family: 'Georgia', serif;
+    font-family: 'Fredoka', sans-serif;
 }
 
 .btn-secondary:hover {
