@@ -27,16 +27,51 @@ header {
     padding: 20px 0;
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.logo-icon {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease;
+}
+
+.logo-icon:hover {
+    transform: scale(1.1) rotate(-5deg);
+}
+
+.logo-text {
+    text-align: left;
+}
+
 header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 10px;
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 5px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #ffffff 0%, #FFE4B5 50%, #FFC107 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+header h1 .highlight {
+    color: #FF6B6B;
+    -webkit-text-fill-color: #FF6B6B;
+    font-style: italic;
 }
 
 .subtitle {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     opacity: 0.9;
+    font-weight: 300;
+    letter-spacing: 1px;
 }
 
 main {
@@ -198,12 +233,29 @@ main {
     flex: 1;
 }
 
+.event-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
 .event-date {
     font-size: 0.85rem;
     color: #667eea;
     font-weight: 500;
     white-space: nowrap;
-    margin-left: 10px;
+}
+
+.event-distance {
+    font-size: 0.75rem;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .event-location {
@@ -450,6 +502,20 @@ footer {
 }
 
 @media (max-width: 600px) {
+    .logo-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .logo-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .logo-text {
+        text-align: center;
+    }
+
     header h1 {
         font-size: 2rem;
     }
@@ -499,5 +565,31 @@ footer {
     .btn-secondary {
         width: 100%;
     }
+}
+
+/* Location status message */
+.location-status {
+    display: none;
+    background: #fff3cd;
+    color: #856404;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    border: 1px solid #ffc107;
+}
+
+.location-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* No events styling */
+.no-events {
+    text-align: center;
+    color: #666;
+    padding: 30px;
+    font-style: italic;
 }
 
