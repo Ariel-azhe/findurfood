@@ -82,6 +82,69 @@
         </footer>
     </div>
 
+    <!-- Notification Prompt Modal -->
+    <div id="notificationModal" class="modal notification-modal">
+        <div class="modal-content notification-modal-content">
+            <div class="modal-header notification-header">
+                <h2>🔔 Stay Updated on Free Food!</h2>
+            </div>
+            <div class="notification-body">
+                <p class="notification-intro">
+                    Never miss free food near you! Get notified when new food events pop up within your preferred distance.
+                </p>
+
+                <div class="notification-section">
+                    <label class="notification-label">Notification Radius</label>
+                    <p class="notification-hint">How close should free food be for us to notify you?</p>
+                    <div class="radius-options">
+                        <button type="button" class="radius-btn" data-radius="100">100m</button>
+                        <button type="button" class="radius-btn active" data-radius="250">250m</button>
+                        <button type="button" class="radius-btn" data-radius="500">500m</button>
+                        <button type="button" class="radius-btn" data-radius="1000">1km</button>
+                    </div>
+                </div>
+
+                <div class="notification-section">
+                    <label class="notification-label">Dietary Restrictions</label>
+                    <p class="notification-hint">Only notify me about food that matches my diet (optional)</p>
+                    <div class="diet-options">
+                        <label class="diet-checkbox">
+                            <input type="checkbox" name="diet" value="vegetarian">
+                            <span class="checkmark"></span>
+                            Vegetarian
+                        </label>
+                        <label class="diet-checkbox">
+                            <input type="checkbox" name="diet" value="vegan">
+                            <span class="checkmark"></span>
+                            Vegan
+                        </label>
+                        <label class="diet-checkbox">
+                            <input type="checkbox" name="diet" value="gluten-free">
+                            <span class="checkmark"></span>
+                            Gluten-Free
+                        </label>
+                        <label class="diet-checkbox">
+                            <input type="checkbox" name="diet" value="halal">
+                            <span class="checkmark"></span>
+                            Halal
+                        </label>
+                        <label class="diet-checkbox">
+                            <input type="checkbox" name="diet" value="kosher">
+                            <span class="checkmark"></span>
+                            Kosher
+                        </label>
+                    </div>
+                    <p class="diet-note">Leave all unchecked to receive notifications for all food types</p>
+                </div>
+            </div>
+
+            <div class="notification-actions">
+                <button type="button" id="skipNotificationsBtn" class="btn-secondary">Maybe Later</button>
+                <button type="button" id="enableNotificationsBtn" class="btn-primary">Enable Notifications</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Camera Popup Modal -->
     <div id="cameraModal" class="modal camera-modal">
         <div class="modal-content camera-modal-content">

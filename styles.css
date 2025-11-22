@@ -230,6 +230,25 @@ main {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
+.event-item.highlight {
+    animation: highlight-pulse 2s ease-out;
+}
+
+@keyframes highlight-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+        background-color: rgba(102, 126, 234, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 20px 10px rgba(102, 126, 234, 0.3);
+        background-color: rgba(102, 126, 234, 0.1);
+    }
+    100% {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: white;
+    }
+}
+
 .event-header {
     display: flex;
     justify-content: space-between;
@@ -690,6 +709,222 @@ footer {
 
     .camera-controls .btn-primary,
     .camera-controls .btn-secondary {
+        max-width: 100%;
+        width: 100%;
+    }
+}
+
+/* Notification Prompt Modal Styles */
+.notification-modal {
+    z-index: 3000; /* Highest z-index to appear on top */
+}
+
+.notification-modal-content {
+    max-width: 500px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.notification-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: none;
+    text-align: center;
+    padding: 30px;
+}
+
+.notification-header h2 {
+    color: white;
+    font-size: 1.6rem;
+    margin: 0;
+}
+
+.notification-body {
+    padding: 25px 30px;
+}
+
+.notification-intro {
+    color: #555;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.notification-section {
+    margin-bottom: 25px;
+}
+
+.notification-label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+.notification-hint {
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+}
+
+/* Radius Selection Buttons */
+.radius-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.radius-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    color: #555;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.radius-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.radius-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    color: white;
+}
+
+/* Dietary Restriction Checkboxes */
+.diet-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.diet-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #555;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.diet-checkbox:hover {
+    border-color: #667eea;
+}
+
+.diet-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.diet-checkbox .checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    margin-right: 8px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.diet-checkbox input[type="checkbox"]:checked + .checkmark {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+.diet-checkbox input[type="checkbox"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.diet-checkbox input[type="checkbox"]:checked ~ * {
+    color: #667eea;
+}
+
+.diet-note {
+    color: #999;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    font-style: italic;
+}
+
+/* Notification Actions */
+.notification-actions {
+    display: flex;
+    gap: 15px;
+    padding: 20px 30px 30px;
+    justify-content: center;
+}
+
+.notification-actions .btn-primary,
+.notification-actions .btn-secondary {
+    flex: 1;
+    max-width: 180px;
+}
+
+/* Responsive Notification Modal */
+@media (max-width: 600px) {
+    .notification-modal-content {
+        max-width: 95vw;
+        margin: 10px;
+    }
+
+    .notification-header {
+        padding: 25px 20px;
+    }
+
+    .notification-header h2 {
+        font-size: 1.4rem;
+    }
+
+    .notification-body {
+        padding: 20px;
+    }
+
+    .radius-options {
+        gap: 8px;
+    }
+
+    .radius-btn {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        min-width: 60px;
+    }
+
+    .diet-options {
+        gap: 8px;
+    }
+
+    .diet-checkbox {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .notification-actions {
+        flex-direction: column;
+        padding: 15px 20px 25px;
+    }
+
+    .notification-actions .btn-primary,
+    .notification-actions .btn-secondary {
         max-width: 100%;
         width: 100%;
     }

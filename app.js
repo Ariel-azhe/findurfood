@@ -9,7 +9,13 @@ const state = {
     buildingMarkers: [], // Store building markers
     userLocationMarker: null, // User's location marker
     userLocation: null, // { lat: number, lng: number }
-    locationError: null
+    locationError: null,
+    // Notification preferences
+    notificationPreferences: {
+        enabled: false,
+        radius: 250, // Default radius in meters
+        dietaryRestrictions: [] // Array of dietary restrictions (e.g., ['vegetarian', 'halal'])
+    }
 };
 
 // DOM Elements
@@ -31,7 +37,13 @@ const elements = {
     cameraCanvas: document.getElementById('cameraCanvas'),
     captureBtn: document.getElementById('captureBtn'),
     closeCameraBtn: document.getElementById('closeCameraBtn'),
-    closeCameraModal: document.querySelector('.close-camera-modal')
+    closeCameraModal: document.querySelector('.close-camera-modal'),
+    // Notification modal elements
+    notificationModal: document.getElementById('notificationModal'),
+    enableNotificationsBtn: document.getElementById('enableNotificationsBtn'),
+    skipNotificationsBtn: document.getElementById('skipNotificationsBtn'),
+    radiusButtons: document.querySelectorAll('.radius-btn'),
+    dietCheckboxes: document.querySelectorAll('.diet-checkbox input[type="checkbox"]')
 };
 
 // Camera state
@@ -40,7 +52,12 @@ let capturedPhotoBlob = null;
 
 // Initialize the application
 async function init() {
+    // Load saved notification preferences
+    loadNotificationPreferences();
+
     setupEventListeners();
+    setupNotificationListeners();
+
     // Map will be initialized by Google Maps callback
     // If callback already fired, initialize manually
     if (typeof google !== 'undefined' && google.maps) {
@@ -59,6 +76,13 @@ async function init() {
     // Show location status message if there was an error
     if (state.locationError) {
         showLocationStatus(state.locationError);
+    }
+
+    // Show notification prompt for new users (after a short delay for better UX)
+    if (isNewUser()) {
+        setTimeout(() => {
+            showNotificationPrompt();
+        }, 1500); // 1.5 second delay to let user see the main interface first
     }
 }
 
@@ -773,6 +797,223 @@ function closeCamera() {
         elements.cameraModal.style.display = 'none';
     }
 }
+
+// ==========================================
+// NOTIFICATION PREFERENCES FUNCTIONS
+// ==========================================
+
+// Check if user is new (hasn't seen notification prompt)
+function isNewUser() {
+    return !localStorage.getItem('findurfood_notification_prompt_seen');
+}
+
+// Load saved notification preferences from localStorage
+function loadNotificationPreferences() {
+    const saved = localStorage.getItem('findurfood_notification_preferences');
+    if (saved) {
+        try {
+            const prefs = JSON.parse(saved);
+            state.notificationPreferences = { ...state.notificationPreferences, ...prefs };
+        } catch (e) {
+            console.error('Error loading notification preferences:', e);
+        }
+    }
+}
+
+// Save notification preferences to localStorage
+function saveNotificationPreferences() {
+    localStorage.setItem('findurfood_notification_preferences', JSON.stringify(state.notificationPreferences));
+    localStorage.setItem('findurfood_notification_prompt_seen', 'true');
+}
+
+// Show notification prompt modal
+function showNotificationPrompt() {
+    if (elements.notificationModal) {
+        elements.notificationModal.style.display = 'flex';
+    }
+}
+
+// Close notification modal
+function closeNotificationModal() {
+    if (elements.notificationModal) {
+        elements.notificationModal.style.display = 'none';
+    }
+}
+
+// Get selected radius from UI
+function getSelectedRadius() {
+    const activeBtn = document.querySelector('.radius-btn.active');
+    return activeBtn ? parseInt(activeBtn.dataset.radius, 10) : 250;
+}
+
+// Get selected dietary restrictions from UI
+function getSelectedDietaryRestrictions() {
+    const restrictions = [];
+    elements.dietCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            restrictions.push(checkbox.value);
+        }
+    });
+    return restrictions;
+}
+
+// Handle radius button click
+function handleRadiusSelect(e) {
+    // Remove active class from all buttons
+    elements.radiusButtons.forEach(btn => btn.classList.remove('active'));
+    // Add active class to clicked button
+    e.target.classList.add('active');
+}
+
+// Handle enable notifications button click
+async function handleEnableNotifications() {
+    // Get selected preferences
+    state.notificationPreferences.radius = getSelectedRadius();
+    state.notificationPreferences.dietaryRestrictions = getSelectedDietaryRestrictions();
+    state.notificationPreferences.enabled = true;
+
+    // Request browser notification permission
+    if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            state.notificationPreferences.browserNotificationsEnabled = true;
+            console.log('Browser notifications enabled');
+        } else {
+            state.notificationPreferences.browserNotificationsEnabled = false;
+            console.log('Browser notifications denied or dismissed');
+        }
+    }
+
+    // Save preferences
+    saveNotificationPreferences();
+
+    // Close modal
+    closeNotificationModal();
+
+    // Show confirmation
+    showNotificationConfirmation();
+}
+
+// Handle skip notifications button click
+function handleSkipNotifications() {
+    // Mark as seen but don't enable
+    state.notificationPreferences.enabled = false;
+    localStorage.setItem('findurfood_notification_prompt_seen', 'true');
+
+    // Close modal
+    closeNotificationModal();
+}
+
+// Show notification confirmation message
+function showNotificationConfirmation() {
+    const radiusText = state.notificationPreferences.radius >= 1000
+        ? `${state.notificationPreferences.radius / 1000}km`
+        : `${state.notificationPreferences.radius}m`;
+
+    const dietText = state.notificationPreferences.dietaryRestrictions.length > 0
+        ? ` for ${state.notificationPreferences.dietaryRestrictions.join(', ')} food`
+        : '';
+
+    const message = `Notifications enabled! You'll be notified about free food within ${radiusText}${dietText}.`;
+
+    showLocationStatus(message);
+}
+
+// Set up notification event listeners
+function setupNotificationListeners() {
+    // Radius button listeners
+    elements.radiusButtons.forEach(btn => {
+        btn.addEventListener('click', handleRadiusSelect);
+    });
+
+    // Enable notifications button
+    if (elements.enableNotificationsBtn) {
+        elements.enableNotificationsBtn.addEventListener('click', handleEnableNotifications);
+    }
+
+    // Skip notifications button
+    if (elements.skipNotificationsBtn) {
+        elements.skipNotificationsBtn.addEventListener('click', handleSkipNotifications);
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+        if (e.target === elements.notificationModal) {
+            handleSkipNotifications();
+        }
+    });
+}
+
+// Check for nearby events and send notification (called when new events are loaded)
+function checkForNearbyEvents(newEvents) {
+    if (!state.notificationPreferences.enabled || !state.userLocation) {
+        return;
+    }
+
+    // Check if browser notifications are supported and permitted
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+        return;
+    }
+
+    const radiusMiles = state.notificationPreferences.radius / 1609.34; // Convert meters to miles
+
+    newEvents.forEach(event => {
+        if (!event.location || !event.location.lat || !event.location.lng) {
+            return;
+        }
+
+        const distance = calculateDistance(
+            state.userLocation.lat,
+            state.userLocation.lng,
+            event.location.lat,
+            event.location.lng
+        );
+
+        // Check if within radius
+        if (distance <= radiusMiles) {
+            // Check dietary restrictions
+            const dietRestrictions = state.notificationPreferences.dietaryRestrictions;
+            if (dietRestrictions.length === 0 ||
+                (event.diet_type && dietRestrictions.includes(event.diet_type.toLowerCase()))) {
+                // Send notification
+                sendFoodNotification(event, distance);
+            }
+        }
+    });
+}
+
+// Send browser notification for a food event
+function sendFoodNotification(event, distance) {
+    const distanceText = formatDistance(distance);
+    const title = 'Free Food Nearby!';
+    const body = `${event.event_name} - ${distanceText} away${event.place_name ? ` at ${event.place_name}` : ''}`;
+
+    const notification = new Notification(title, {
+        body: body,
+        icon: 'logo.svg',
+        tag: `food-event-${event.id}`, // Prevent duplicate notifications
+        requireInteraction: true
+    });
+
+    notification.onclick = () => {
+        window.focus();
+        // Focus on the event in the UI
+        const eventEl = document.querySelector(`[data-event-id="${event.id}"]`);
+        if (eventEl) {
+            eventEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            eventEl.classList.add('highlight');
+            setTimeout(() => eventEl.classList.remove('highlight'), 2000);
+        }
+        if (event.location) {
+            focusOnEvent(event);
+        }
+        notification.close();
+    };
+}
+
+// ==========================================
+// END NOTIFICATION FUNCTIONS
+// ==========================================
 
 // Handle photo selection
 function handlePhotoSelect(e) {
