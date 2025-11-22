@@ -20,7 +20,8 @@ const elements = {
     closeModal: document.querySelector('.close-modal'),
     cancelBtn: document.getElementById('cancelBtn'),
     photoInput: document.getElementById('photo'),
-    photoPreview: document.getElementById('photoPreview')
+    photoPreview: document.getElementById('photoPreview'),
+    cameraBtn: document.getElementById('cameraBtn')
 };
 
 // Initialize the application
@@ -96,6 +97,9 @@ function setupEventListeners() {
 
     // Photo input change
     elements.photoInput.addEventListener('change', handlePhotoSelect);
+
+    // Camera button click
+    elements.cameraBtn.addEventListener('click', openCamera);
 
     // Form submission
     elements.postFoodForm.addEventListener('submit', handleFormSubmit);
@@ -301,6 +305,12 @@ function closeModal() {
     elements.photoPreview.style.display = 'none';
 }
 
+// Open camera to take a photo
+function openCamera() {
+    // Trigger the file input click, which will open camera on mobile devices
+    elements.photoInput.click();
+}
+
 // Handle photo selection
 function handlePhotoSelect(e) {
     const file = e.target.files[0];
@@ -368,7 +378,8 @@ async function handleFormSubmit(e) {
             room_number: roomNumber,
             cuisine: cuisine || null,
             diet_type: dietType || null,
-            photo: photoBase64
+            photo: photoBase64,
+            location: state.userLocation || null
         };
 
         // Submit to API
