@@ -96,9 +96,9 @@ A web application to visualize Princeton's free food email list events on an int
 
 ## Features
 
-- Interactive map display (placeholder ready for map library integration)
+- Interactive map display with Google Maps integration
 - Event list sidebar with search functionality
-- Filter events by date (All, Today, This Week)
+- Sort events by time, distance, or name
 - Responsive design for mobile and desktop
 - Modern, clean UI
 

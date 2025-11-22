@@ -63,13 +63,13 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, place_name, room_number, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
 
         // Validate required fields
-        if (!event_name) {
+        if (!event_name || !diet_type) {
             return res.status(400).json({
                 error: 'Missing required fields',
-                required: ['event_name']
+                required: ['event_name', 'diet_type']
             });
         }
 
@@ -86,12 +86,15 @@ app.post('/api/events', async (req, res) => {
             .insert([
                 {
                     event_name,
-                    place_name: place_name || null,
+                    building: building || null,
                     room_number: room_number || null,
-                    diet_type: diet_type || null,
+                    place_name: place_name || null,
+                    diet_type,
                     cuisine: cuisine || null,
                     location: location || null,
-                    photo: photo || null
+                    photo: photo || null,
+                    event_time: event_time || null,
+                    description: description || null
                 }
             ])
             .select()
@@ -123,16 +126,22 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, place_name, room_number, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
         if (place_name !== undefined) updateData.place_name = place_name;
+        if (building !== undefined) updateData.building = building;
         if (room_number !== undefined) updateData.room_number = room_number;
         if (diet_type !== undefined) updateData.diet_type = diet_type;
         if (cuisine !== undefined) updateData.cuisine = cuisine;
         if (location !== undefined) updateData.location = location;
         if (photo !== undefined) updateData.photo = photo;
+        if (event_time !== undefined) updateData.event_time = event_time;
+        if (description !== undefined) updateData.description = description;
+        if (event_time !== undefined) updateData.event_time = event_time;
+        if (description !== undefined) updateData.description = description;
+        if (place_name !== undefined) updateData.place_name = place_name;
 
         const { data, error } = await supabase
             .from('free_food_events')

@@ -2,8 +2,8 @@
 const state = {
     events: [],
     filteredEvents: [],
-    currentFilter: 'all',
     searchQuery: '',
+    sortBy: 'time-asc', // Default sort by time ascending
     map: null,
     markers: [], // Store Google Maps markers for events
     buildingMarkers: [], // Store building markers
@@ -23,7 +23,7 @@ const elements = {
     searchInput: document.getElementById('searchInput'),
     eventsList: document.getElementById('eventsList'),
     map: document.getElementById('map'),
-    filterButtons: document.querySelectorAll('.filter-btn'),
+    sortBy: document.getElementById('sortBy'),
     postFoodBtn: document.getElementById('postFoodBtn'),
     postFoodModal: document.getElementById('postFoodModal'),
     postFoodForm: document.getElementById('postFoodForm'),
@@ -84,6 +84,7 @@ async function init() {
             showNotificationPrompt();
         }, 1500); // 1.5 second delay to let user see the main interface first
     }
+    // Location is optional - no need to show errors
 }
 
 // Show location status message to user
@@ -108,18 +109,11 @@ function setupEventListeners() {
         renderEvents();
     });
 
-    // Filter buttons
-    elements.filterButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Update active state
-            elements.filterButtons.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-
-            // Update filter
-            state.currentFilter = e.target.dataset.filter;
-            filterEvents();
-            renderEvents();
-        });
+    // Sort dropdown
+    elements.sortBy.addEventListener('change', (e) => {
+        state.sortBy = e.target.value;
+        filterEvents();
+        renderEvents();
     });
 
     // Post Free Food button
@@ -185,51 +179,26 @@ function filterEvents() {
 
     // Apply search filter
     if (state.searchQuery) {
-        filtered = filtered.filter(event =>
-            event.event_name.toLowerCase().includes(state.searchQuery) ||
-            (event.place_name && event.place_name.toLowerCase().includes(state.searchQuery)) ||
-            (event.room_number && event.room_number.toLowerCase().includes(state.searchQuery)) ||
-            (event.cuisine && event.cuisine.toLowerCase().includes(state.searchQuery)) ||
-            (event.diet_type && event.diet_type.toLowerCase().includes(state.searchQuery))
-        );
         filtered = filtered.filter(event => {
             const eventName = (event.event_name || event.title || '').toLowerCase();
+            const placeName = (event.place_name || '').toLowerCase();
+            const cuisine = (event.cuisine || '').toLowerCase();
+            const dietType = (event.diet_type || '').toLowerCase();
             const locationStr = typeof event.location === 'string'
                 ? event.location.toLowerCase()
                 : '';
             const description = (event.description || '').toLowerCase();
             return eventName.includes(state.searchQuery) ||
+                   placeName.includes(state.searchQuery) ||
+                   cuisine.includes(state.searchQuery) ||
+                   dietType.includes(state.searchQuery) ||
                    locationStr.includes(state.searchQuery) ||
                    description.includes(state.searchQuery);
         });
     }
 
-    // Apply date filter
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekFromNow = new Date(today);
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
 
-    switch (state.currentFilter) {
-        case 'today':
-            filtered = filtered.filter(event => {
-                const eventDate = new Date(event.created_at);
-                return eventDate >= today && eventDate < new Date(today.getTime() + 24 * 60 * 60 * 1000);
-            });
-            break;
-        case 'this-week':
-            filtered = filtered.filter(event => {
-                const eventDate = new Date(event.created_at);
-                return eventDate >= today && eventDate < weekFromNow;
-            });
-            break;
-        case 'all':
-        default:
-            // No date filtering
-            break;
-    }
-
-    // Calculate distance for each event and sort by distance if user location is available
+    // Calculate distance for each event if user location is available
     if (state.userLocation) {
         filtered = filtered.map(event => {
             let distance = null;
@@ -245,15 +214,29 @@ function filterEvents() {
             }
             return { ...event, distance };
         });
-
-        // Sort by distance (nearest first), events without distance go to end
-        filtered.sort((a, b) => {
-            if (a.distance === null && b.distance === null) return 0;
-            if (a.distance === null) return 1;
-            if (b.distance === null) return -1;
-            return a.distance - b.distance;
-        });
     }
+
+    // Sort events based on selected sort option
+    filtered.sort((a, b) => {
+        switch (state.sortBy) {
+            case 'time-asc':
+                return sortByTime(a, b, true);
+            case 'time-desc':
+                return sortByTime(a, b, false);
+            case 'distance':
+                if (!state.userLocation) return 0;
+                if (a.distance === null && b.distance === null) return 0;
+                if (a.distance === null) return 1;
+                if (b.distance === null) return -1;
+                return a.distance - b.distance;
+            case 'name':
+                const nameA = (a.event_name || '').toLowerCase();
+                const nameB = (b.event_name || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            default:
+                return 0;
+        }
+    });
 
     state.filteredEvents = filtered;
     updateMapMarkers(); // Update markers when filters change
@@ -267,10 +250,12 @@ function renderEvents() {
     }
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
-        const dateStr = formatDate(event.created_at || event.date);
-        const location = event.place_name && event.room_number
-            ? `${escapeHtml(event.place_name)}, Room ${escapeHtml(event.room_number)}`
-            : event.place_name || event.room_number || 'Location not specified';
+        const timeStr = event.event_time ? escapeHtml(event.event_time) : formatUploadTime(event.created_at);
+        // Use place_name if available, otherwise fall back to building/room_number
+        const location = event.place_name || 
+            (event.building && event.room_number
+                ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
+                : event.building || event.room_number || 'Location not specified');
 
         const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
@@ -293,8 +278,8 @@ function renderEvents() {
                 <div class="event-header">
                     <h3>${escapeHtml(title)}</h3>
                     <div class="event-meta">
+                        <span class="event-time">${timeStr}</span>
                         ${distanceBadge}
-                        <span class="event-date">${dateStr}</span>
                     </div>
                 </div>
                 <p class="event-location">📍 ${location}</p>
@@ -321,6 +306,59 @@ function formatDate(date) {
     const d = new Date(date);
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return d.toLocaleDateString('en-US', options);
+}
+
+// Format time from timestamp to 12-hour format with AM/PM
+function formatUploadTime(timestamp) {
+    if (!timestamp) return 'Time TBD';
+
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    // Convert to 12-hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+
+    // Pad minutes with leading zero if needed
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+
+    return `${hours}:${minutesStr}${ampm}`;
+}
+
+// Convert time string (e.g., "9:00PM") to minutes for sorting
+function timeToMinutes(timeStr) {
+    if (!timeStr) return Infinity; // Events without time go to end
+    
+    const match = timeStr.match(/(\d{1,2}):(\d{2})(AM|PM)/i);
+    if (!match) return Infinity;
+    
+    let hours = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hours !== 12) {
+        hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+        hours = 0;
+    }
+    
+    return hours * 60 + minutes;
+}
+
+// Sort by time
+function sortByTime(a, b, ascending = true) {
+    const timeA = timeToMinutes(a.event_time);
+    const timeB = timeToMinutes(b.event_time);
+    
+    // Events without time go to end
+    if (timeA === Infinity && timeB === Infinity) return 0;
+    if (timeA === Infinity) return 1;
+    if (timeB === Infinity) return -1;
+    
+    return ascending ? timeA - timeB : timeB - timeA;
 }
 
 // Focus on event (for map interaction)
@@ -674,21 +712,22 @@ window.disableCoordinatePicker = function() {
 // Make initMap globally accessible for Google Maps callback
 window.initMap = initMap;
 
-// Get marker color based on cuisine type
+// Get marker color based on cuisine type - using Princeton Orange variations
 function getMarkerColor(cuisine) {
-    if (!cuisine) return '#4285F4'; // Default blue
+    if (!cuisine) return '#FF8F00'; // Princeton Orange as default
     
+    // Use variations of Princeton Orange for different cuisines
     const colorMap = {
-        'Thai': '#FF6B6B',
-        'Italian': '#4ECDC4',
-        'Mexican': '#FFE66D',
-        'Chinese': '#FF6B9D',
-        'Japanese': '#C44569',
-        'Indian': '#F8B500',
-        'American': '#95E1D3'
+        'Thai': '#FF8F00',      // Princeton Orange
+        'Italian': '#FFA726',   // Lighter orange
+        'Mexican': '#FF9800',   // Orange
+        'Chinese': '#FFB74D',   // Light orange
+        'Japanese': '#FF8F00',  // Princeton Orange
+        'Indian': '#FF6F00',    // Darker orange
+        'American': '#FFA000'   // Medium orange
     };
     
-    return colorMap[cuisine] || '#4285F4';
+    return colorMap[cuisine] || '#FF8F00'; // Default to Princeton Orange
 }
 
 // Utility function to escape HTML
@@ -1050,6 +1089,64 @@ function getBase64FromFile(file) {
     });
 }
 
+// Geocode a place name to coordinates using Google Maps API
+// Restricts search to Princeton University area
+async function geocodePlaceName(placeName) {
+    if (!placeName || !google || !google.maps) {
+        return null;
+    }
+
+    return new Promise((resolve) => {
+        const geocoder = new google.maps.Geocoder();
+
+        // Princeton University coordinates for biasing results
+        const princetonCenter = { lat: 40.3430, lng: -74.6551 };
+
+        // Geocode with bias towards Princeton
+        geocoder.geocode({
+            address: `${placeName}, Princeton University, Princeton, NJ`,
+            componentRestrictions: {
+                country: 'US',
+                administrativeArea: 'NJ',
+                locality: 'Princeton'
+            },
+            bounds: {
+                north: 40.3530,
+                south: 40.3330,
+                east: -74.6451,
+                west: -74.6651
+            }
+        }, (results, status) => {
+            if (status === 'OK' && results && results.length > 0) {
+                const location = results[0].geometry.location;
+                const coords = {
+                    lat: location.lat(),
+                    lng: location.lng()
+                };
+
+                // Validate that the result is actually near Princeton (within ~5 miles)
+                const distanceFromPrinceton = calculateDistance(
+                    princetonCenter.lat,
+                    princetonCenter.lng,
+                    coords.lat,
+                    coords.lng
+                );
+
+                if (distanceFromPrinceton < 5) {
+                    console.log(`Geocoded "${placeName}" to:`, coords);
+                    resolve(coords);
+                } else {
+                    console.warn(`Geocoded location for "${placeName}" is too far from Princeton (${distanceFromPrinceton.toFixed(1)} miles)`);
+                    resolve(null);
+                }
+            } else {
+                console.warn(`Geocoding failed for "${placeName}":`, status);
+                resolve(null);
+            }
+        });
+    });
+}
+
 // Handle form submission
 async function handleFormSubmit(e) {
     e.preventDefault();
@@ -1075,15 +1172,41 @@ async function handleFormSubmit(e) {
             photoBase64 = await getBase64FromFile(photoFile);
         }
 
+        // Combine place name and room number
+        let combinedPlaceName = placeName || '';
+        if (roomNumber && roomNumber.trim()) {
+            if (combinedPlaceName) {
+                combinedPlaceName += `, Room ${roomNumber.trim()}`;
+            } else {
+                combinedPlaceName = `Room ${roomNumber.trim()}`;
+            }
+        }
+
+        // Geocode the place name to get actual Princeton coordinates
+        let eventLocation = null;
+        if (placeName) {
+            eventLocation = await geocodePlaceName(placeName);
+            if (!eventLocation) {
+                // Fallback: try just the building name without "Princeton University"
+                console.log('Retrying geocoding with simpler query...');
+                eventLocation = await geocodePlaceName(`${placeName}, Princeton, NJ`);
+            }
+        }
+
+        // If geocoding fails, fall back to user's current location
+        if (!eventLocation) {
+            console.warn('Geocoding failed, using user location as fallback');
+            eventLocation = state.userLocation;
+        }
+
         // Prepare data for API
         const eventData = {
             event_name: eventName,
-            place_name: placeName,
-            room_number: roomNumber,
+            place_name: combinedPlaceName || null,
             cuisine: cuisine || null,
             diet_type: dietType || null,
             photo: photoBase64,
-            location: state.userLocation || null
+            location: eventLocation || null
         };
 
         // Submit to API
@@ -1146,26 +1269,28 @@ function getUserLocation() {
                 resolve(state.userLocation);
             },
             (error) => {
+                // Don't show error messages - location is optional
+                // Only log for debugging
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        state.locationError = 'Location permission denied';
+                        console.log('Location permission denied - distance sorting disabled');
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        state.locationError = 'Location information unavailable';
+                        console.log('Location unavailable - distance sorting disabled');
                         break;
                     case error.TIMEOUT:
-                        state.locationError = 'Location request timed out';
+                        console.log('Location request timed out - distance sorting disabled');
                         break;
                     default:
-                        state.locationError = 'Unknown location error';
+                        console.log('Location error - distance sorting disabled');
                 }
-                console.warn('Geolocation error:', state.locationError);
+                state.locationError = null; // Don't set error, just silently fail
                 resolve(null);
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000 // Cache location for 5 minutes
+                enableHighAccuracy: false, // Less strict - use IP-based location if GPS unavailable
+                timeout: 5000, // Shorter timeout
+                maximumAge: 60000 // Cache location for 1 minute
             }
         );
     });
