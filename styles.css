@@ -31,22 +31,17 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
 }
 
-.logo-icon {
-    width: 80px;
-    height: 80px;
+.logo-full {
+    max-width: 350px;
+    height: auto;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     transition: transform 0.3s ease;
 }
 
-.logo-icon:hover {
-    transform: scale(1.1) rotate(-5deg);
-}
-
-.logo-text {
-    text-align: left;
+.logo-full:hover {
+    transform: scale(1.05);
 }
 
 header h1 {
@@ -590,21 +585,11 @@ footer {
 
 @media (max-width: 600px) {
     .logo-container {
-        flex-direction: column;
-        gap: 10px;
+        padding: 0 10px;
     }
 
-    .logo-icon {
-        width: 60px;
-        height: 60px;
-    }
-
-    .logo-text {
-        text-align: center;
-    }
-
-    header h1 {
-        font-size: 2rem;
+    .logo-full {
+        max-width: 280px;
     }
 
     .controls {
