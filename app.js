@@ -225,11 +225,8 @@ function renderEvents() {
         const timeStr = event.event_time ? escapeHtml(event.event_time) : formatUploadTime(event.created_at);
         const relativeTime = event.created_at ? getRelativeTime(event.created_at) : '';
         const timeDisplay = relativeTime ? `${timeStr}<br><small>Since ${relativeTime}</small>` : timeStr;
-        // Use place_name if available, otherwise fall back to building/room_number
-        const location = event.place_name || 
-            (event.building && event.room_number
-                ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
-                : event.building || event.room_number || 'Location not specified');
+        // Use place_name
+        const location = event.place_name || 'Location not specified';
 
         const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
@@ -965,14 +962,6 @@ async function handleFormSubmit(e) {
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Posting...';
         submitBtn.disabled = true;
-
-        // Validate photo is provided (mandatory field)
-        if (!photoFile || photoFile.size === 0) {
-            alert('Please take a photo of the free food. Photo is required.');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            return;
-        }
 
         // Convert photo to base64 if provided
         let photoBase64 = null;
