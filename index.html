@@ -33,6 +33,12 @@
         <header>
             <div class="logo-container">
                 <img src="HungryTigers_bgno.png" alt="HungryTigers - Princeton Free Food" class="logo-full">
+                <button id="settingsBtn" class="settings-btn" title="Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -283,6 +289,69 @@
             <div class="modal-actions">
                 <button type="button" id="skipPreferencesBtn" class="btn-secondary">Skip for Now</button>
                 <button type="button" id="savePreferencesBtn" class="btn-primary">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content preferences-modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <span class="close-settings-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="preferences-intro">Customize your HungryTigers experience.</p>
+
+                <div class="preference-section">
+                    <h3>Notifications</h3>
+                    <label class="toggle-container">
+                        <input type="checkbox" id="settingsEnableNotifications" name="settingsEnableNotifications">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Notify me about nearby free food events</span>
+                    </label>
+                </div>
+
+                <div class="preference-section">
+                    <h3>Dietary Restrictions</h3>
+                    <p class="preference-description">Select the diet types you're interested in:</p>
+                    <div class="diet-options-grid">
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="settingsDietPreference" value="vegetarian">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Vegetarian</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="settingsDietPreference" value="vegan">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Vegan</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="settingsDietPreference" value="gluten-free">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Gluten-Free</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="settingsDietPreference" value="halal">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Halal</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="settingsDietPreference" value="kosher">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Kosher</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="settingsDietPreference" value="no-restriction" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">No Restriction (Show All)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="cancelSettingsBtn" class="btn-secondary">Cancel</button>
+                <button type="button" id="saveSettingsBtn" class="btn-primary">Save Settings</button>
             </div>
         </div>
     </div>

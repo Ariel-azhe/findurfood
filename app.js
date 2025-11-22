@@ -47,7 +47,14 @@ const elements = {
     closePreferencesModal: document.querySelector('.close-preferences-modal'),
     enableNotifications: document.getElementById('enableNotifications'),
     savePreferencesBtn: document.getElementById('savePreferencesBtn'),
-    skipPreferencesBtn: document.getElementById('skipPreferencesBtn')
+    skipPreferencesBtn: document.getElementById('skipPreferencesBtn'),
+    // Settings modal elements
+    settingsBtn: document.getElementById('settingsBtn'),
+    settingsModal: document.getElementById('settingsModal'),
+    closeSettingsModal: document.querySelector('.close-settings-modal'),
+    settingsEnableNotifications: document.getElementById('settingsEnableNotifications'),
+    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+    cancelSettingsBtn: document.getElementById('cancelSettingsBtn')
 };
 
 // Camera state
@@ -61,6 +68,7 @@ async function init() {
 
     setupEventListeners();
     setupPreferencesModalListeners();
+    setupSettingsModalListeners();
 
     // Map will be initialized by Google Maps callback
     // If callback already fired, initialize manually
@@ -212,6 +220,126 @@ function setupPreferencesModalListeners() {
     // Handle "No Restriction" checkbox logic - when checked, it should uncheck others
     const noRestrictionCheckbox = document.querySelector('input[name="dietPreference"][value="no-restriction"]');
     const otherDietCheckboxes = document.querySelectorAll('input[name="dietPreference"]:not([value="no-restriction"])');
+
+    if (noRestrictionCheckbox) {
+        noRestrictionCheckbox.addEventListener('change', () => {
+            if (noRestrictionCheckbox.checked) {
+                // Uncheck all other diet options
+                otherDietCheckboxes.forEach(cb => cb.checked = false);
+            }
+        });
+    }
+
+    otherDietCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked && noRestrictionCheckbox) {
+                // Uncheck "No Restriction" when another option is selected
+                noRestrictionCheckbox.checked = false;
+            }
+
+            // If no options are checked, re-check "No Restriction"
+            const anyChecked = Array.from(otherDietCheckboxes).some(cb => cb.checked);
+            if (!anyChecked && noRestrictionCheckbox) {
+                noRestrictionCheckbox.checked = true;
+            }
+        });
+    });
+}
+
+// Show the settings modal
+function showSettingsModal() {
+    if (elements.settingsModal) {
+        // Restore saved preferences to the settings form
+        if (elements.settingsEnableNotifications) {
+            elements.settingsEnableNotifications.checked = state.userPreferences.notificationsEnabled;
+        }
+
+        // Restore diet preferences checkboxes in settings modal
+        const dietCheckboxes = document.querySelectorAll('input[name="settingsDietPreference"]');
+        dietCheckboxes.forEach(checkbox => {
+            checkbox.checked = state.userPreferences.dietPreferences.includes(checkbox.value);
+        });
+
+        elements.settingsModal.style.display = 'flex';
+    }
+}
+
+// Close the settings modal
+function closeSettingsModalFn() {
+    if (elements.settingsModal) {
+        elements.settingsModal.style.display = 'none';
+    }
+}
+
+// Set up event listeners for the settings modal
+function setupSettingsModalListeners() {
+    // Settings button click - open settings modal
+    if (elements.settingsBtn) {
+        elements.settingsBtn.addEventListener('click', () => {
+            showSettingsModal();
+        });
+    }
+
+    // Close modal button
+    if (elements.closeSettingsModal) {
+        elements.closeSettingsModal.addEventListener('click', () => {
+            closeSettingsModalFn();
+        });
+    }
+
+    // Cancel button - just close without saving
+    if (elements.cancelSettingsBtn) {
+        elements.cancelSettingsBtn.addEventListener('click', () => {
+            closeSettingsModalFn();
+        });
+    }
+
+    // Save settings button
+    if (elements.saveSettingsBtn) {
+        elements.saveSettingsBtn.addEventListener('click', () => {
+            // Get notification preference
+            state.userPreferences.notificationsEnabled = elements.settingsEnableNotifications?.checked || false;
+
+            // Get diet preferences from settings modal
+            const dietCheckboxes = document.querySelectorAll('input[name="settingsDietPreference"]:checked');
+            const selectedDiets = Array.from(dietCheckboxes).map(cb => cb.value);
+
+            // If no diet is selected, default to no-restriction
+            state.userPreferences.dietPreferences = selectedDiets.length > 0 ? selectedDiets : ['no-restriction'];
+
+            // Save to localStorage
+            saveUserPreferences();
+
+            // Request notification permission if enabled
+            if (state.userPreferences.notificationsEnabled && 'Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted');
+                    }
+                });
+            }
+
+            // Re-filter events with new preferences
+            filterEvents();
+            renderEvents();
+
+            // Close modal
+            closeSettingsModalFn();
+        });
+    }
+
+    // Close modal when clicking outside
+    if (elements.settingsModal) {
+        window.addEventListener('click', (e) => {
+            if (e.target === elements.settingsModal) {
+                closeSettingsModalFn();
+            }
+        });
+    }
+
+    // Handle "No Restriction" checkbox logic in settings modal
+    const noRestrictionCheckbox = document.querySelector('input[name="settingsDietPreference"][value="no-restriction"]');
+    const otherDietCheckboxes = document.querySelectorAll('input[name="settingsDietPreference"]:not([value="no-restriction"])');
 
     if (noRestrictionCheckbox) {
         noRestrictionCheckbox.addEventListener('change', () => {
