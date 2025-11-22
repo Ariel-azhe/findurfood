@@ -3,7 +3,9 @@ const state = {
     events: [],
     filteredEvents: [],
     currentFilter: 'all',
-    searchQuery: ''
+    searchQuery: '',
+    userLocation: null, // { lat: number, lng: number }
+    locationError: null
 };
 
 // DOM Elements
@@ -17,8 +19,33 @@ const elements = {
 // Initialize the application
 async function init() {
     setupEventListeners();
-    await loadEvents();
+    // Request location permission and load events in parallel
+    const [, userLocation] = await Promise.all([
+        loadEvents(),
+        getUserLocation()
+    ]);
+
+    // Re-filter and render to apply distance sorting
+    filterEvents();
     renderEvents();
+
+    // Show location status message if there was an error
+    if (state.locationError) {
+        showLocationStatus(state.locationError);
+    }
+}
+
+// Show location status message to user
+function showLocationStatus(message) {
+    const statusEl = document.getElementById('locationStatus');
+    if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.style.display = 'block';
+        // Hide after 5 seconds
+        setTimeout(() => {
+            statusEl.style.display = 'none';
+        }, 5000);
+    }
 }
 
 // Set up event listeners
@@ -73,11 +100,16 @@ function filterEvents() {
 
     // Apply search filter
     if (state.searchQuery) {
-        filtered = filtered.filter(event => 
-            event.title.toLowerCase().includes(state.searchQuery) ||
-            event.location.toLowerCase().includes(state.searchQuery) ||
-            event.description.toLowerCase().includes(state.searchQuery)
-        );
+        filtered = filtered.filter(event => {
+            const eventName = (event.event_name || event.title || '').toLowerCase();
+            const locationStr = typeof event.location === 'string'
+                ? event.location.toLowerCase()
+                : '';
+            const description = (event.description || '').toLowerCase();
+            return eventName.includes(state.searchQuery) ||
+                   locationStr.includes(state.searchQuery) ||
+                   description.includes(state.searchQuery);
+        });
     }
 
     // Apply date filter
@@ -105,6 +137,32 @@ function filterEvents() {
             break;
     }
 
+    // Calculate distance for each event and sort by distance if user location is available
+    if (state.userLocation) {
+        filtered = filtered.map(event => {
+            let distance = null;
+            // Handle both object location { lat, lng } and string location
+            if (event.location && typeof event.location === 'object' &&
+                event.location.lat != null && event.location.lng != null) {
+                distance = calculateDistance(
+                    state.userLocation.lat,
+                    state.userLocation.lng,
+                    event.location.lat,
+                    event.location.lng
+                );
+            }
+            return { ...event, distance };
+        });
+
+        // Sort by distance (nearest first), events without distance go to end
+        filtered.sort((a, b) => {
+            if (a.distance === null && b.distance === null) return 0;
+            if (a.distance === null) return 1;
+            if (b.distance === null) return -1;
+            return a.distance - b.distance;
+        });
+    }
+
     state.filteredEvents = filtered;
 }
 
@@ -117,14 +175,29 @@ function renderEvents() {
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
         const dateStr = formatDate(event.date);
+        // Support both event_name (backend) and title (frontend)
+        const title = event.event_name || event.title || 'Untitled Event';
+        // Format location for display
+        const locationDisplay = typeof event.location === 'object'
+            ? `(${event.location.lat.toFixed(4)}, ${event.location.lng.toFixed(4)})`
+            : (event.location || 'Unknown location');
+        const description = event.description || event.diet_type || '';
+        // Distance badge
+        const distanceBadge = event.distance != null
+            ? `<span class="event-distance">${formatDistance(event.distance)}</span>`
+            : '';
+
         return `
             <div class="event-item" data-event-id="${event.id}">
                 <div class="event-header">
-                    <h3>${escapeHtml(event.title)}</h3>
-                    <span class="event-date">${dateStr}</span>
+                    <h3>${escapeHtml(title)}</h3>
+                    <div class="event-meta">
+                        ${distanceBadge}
+                        <span class="event-date">${dateStr}</span>
+                    </div>
                 </div>
-                <p class="event-location">Location: ${escapeHtml(event.location)}</p>
-                <p class="event-description">${escapeHtml(event.description)}</p>
+                <p class="event-location">Location: ${escapeHtml(locationDisplay)}</p>
+                ${description ? `<p class="event-description">${escapeHtml(description)}</p>` : ''}
             </div>
         `;
     }).join('');
@@ -132,8 +205,8 @@ function renderEvents() {
     // Add click handlers to event items
     document.querySelectorAll('.event-item').forEach(item => {
         item.addEventListener('click', () => {
-            const eventId = parseInt(item.dataset.eventId);
-            const event = state.events.find(e => e.id === eventId);
+            const eventId = item.dataset.eventId;
+            const event = state.filteredEvents.find(e => e.id === eventId || e.id === parseInt(eventId));
             if (event) {
                 focusOnEvent(event);
             }
@@ -177,6 +250,82 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Request user's geolocation
+function getUserLocation() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            state.locationError = 'Geolocation is not supported by your browser';
+            console.warn(state.locationError);
+            resolve(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                state.userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                state.locationError = null;
+                console.log('User location obtained:', state.userLocation);
+                resolve(state.userLocation);
+            },
+            (error) => {
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        state.locationError = 'Location permission denied';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        state.locationError = 'Location information unavailable';
+                        break;
+                    case error.TIMEOUT:
+                        state.locationError = 'Location request timed out';
+                        break;
+                    default:
+                        state.locationError = 'Unknown location error';
+                }
+                console.warn('Geolocation error:', state.locationError);
+                resolve(null);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // Cache location for 5 minutes
+            }
+        );
+    });
+}
+
+// Calculate distance between two coordinates using Haversine formula
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 3959; // Earth's radius in miles (use 6371 for kilometers)
+    const dLat = toRadians(lat2 - lat1);
+    const dLng = toRadians(lng2 - lng1);
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in miles
+}
+
+function toRadians(degrees) {
+    return degrees * (Math.PI / 180);
+}
+
+// Format distance for display
+function formatDistance(miles) {
+    if (miles < 0.1) {
+        return 'Nearby';
+    } else if (miles < 1) {
+        const feet = Math.round(miles * 5280);
+        return `${feet} ft`;
+    } else {
+        return `${miles.toFixed(1)} mi`;
+    }
 }
 
 // Initialize the app when DOM is ready
