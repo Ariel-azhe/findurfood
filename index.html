@@ -27,8 +27,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>Find Your Food</h1>
-            <p class="subtitle">Princeton Free Food Events</p>
+            <div class="logo-container">
+                <img src="logo.svg" alt="Find Your Food Logo" class="logo-icon">
+                <div class="logo-text">
+                    <h1>Find<span class="highlight">Ur</span>Food</h1>
+                    <p class="subtitle">Princeton Free Food Events</p>
+                </div>
+            </div>
         </header>
 
         <main>
@@ -41,7 +46,9 @@
                     <button class="filter-btn" data-filter="today">Today</button>
                     <button class="filter-btn" data-filter="this-week">This Week</button>
                 </div>
+                <button id="postFoodBtn" class="post-food-btn">+ Post Free Food</button>
             </div>
+            <div id="locationStatus" class="location-status"></div>
 
             <div class="content-wrapper">
                 <div class="map-container">
@@ -73,6 +80,94 @@
         <footer>
             <p>Data from Princeton Free Food Email List</p>
         </footer>
+    </div>
+
+    <!-- Post Free Food Modal -->
+    <div id="postFoodModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Post Free Food</h2>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="postFoodForm">
+                <div class="form-group">
+                    <label for="eventName">Event Name *</label>
+                    <input type="text" id="eventName" name="eventName" required placeholder="e.g., Free Pizza from Club Meeting">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="building">Building *</label>
+                        <select id="building" name="building" required>
+                            <option value="">Select a building</option>
+                            <option value="Frist Campus Center">Frist Campus Center</option>
+                            <option value="McCosh Hall">McCosh Hall</option>
+                            <option value="Robertson Hall">Robertson Hall</option>
+                            <option value="Friend Center">Friend Center</option>
+                            <option value="Lewis Library">Lewis Library</option>
+                            <option value="Firestone Library">Firestone Library</option>
+                            <option value="Chancellor Green">Chancellor Green</option>
+                            <option value="East Pyne">East Pyne</option>
+                            <option value="West College">West College</option>
+                            <option value="Whig Hall">Whig Hall</option>
+                            <option value="Clio Hall">Clio Hall</option>
+                            <option value="Nassau Hall">Nassau Hall</option>
+                            <option value="Fine Hall">Fine Hall</option>
+                            <option value="Peyton Hall">Peyton Hall</option>
+                            <option value="Jadwin Hall">Jadwin Hall</option>
+                            <option value="McDonnell Hall">McDonnell Hall</option>
+                            <option value="Dod Hall">Dod Hall</option>
+                            <option value="1901 Hall">1901 Hall</option>
+                            <option value="Blair Hall">Blair Hall</option>
+                            <option value="Mathey College">Mathey College</option>
+                            <option value="Rockefeller College">Rockefeller College</option>
+                            <option value="Butler College">Butler College</option>
+                            <option value="Whitman College">Whitman College</option>
+                            <option value="Forbes College">Forbes College</option>
+                            <option value="Graduate College">Graduate College</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="roomNumber">Room Number *</label>
+                        <input type="text" id="roomNumber" name="roomNumber" required placeholder="e.g., 201">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">Photo</label>
+                    <div class="photo-upload-container">
+                        <input type="file" id="photo" name="photo" accept="image/*" capture="environment">
+                        <button type="button" id="cameraBtn" class="camera-btn">📷 Take Photo</button>
+                        <div id="photoPreview" class="photo-preview"></div>
+                    </div>
+                    <small>Upload or take a photo of the free food (optional)</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cuisine">Cuisine Type</label>
+                        <input type="text" id="cuisine" name="cuisine" placeholder="e.g., Italian, Mexican">
+                    </div>
+                    <div class="form-group">
+                        <label for="dietType">Diet Type</label>
+                        <select id="dietType" name="dietType">
+                            <option value="">None</option>
+                            <option value="vegetarian">Vegetarian</option>
+                            <option value="vegan">Vegan</option>
+                            <option value="gluten-free">Gluten-Free</option>
+                            <option value="halal">Halal</option>
+                            <option value="kosher">Kosher</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary">Post Free Food</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="app.js"></script>
