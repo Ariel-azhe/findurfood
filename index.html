@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Find Your Food - Princeton Free Food Map</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Load Google Maps API key from backend and initialize map
+        (async function() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                const apiKey = config.googleMapsApiKey || 'YOUR_API_KEY';
+                
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap`;
+                script.async = true;
+                script.defer = true;
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('Failed to load Google Maps API key:', error);
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">

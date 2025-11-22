@@ -169,6 +169,13 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Get Google Maps API key (for frontend use)
+app.get('/api/config', (req, res) => {
+    res.json({ 
+        googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || ''
+    });
+});
+
 // Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));

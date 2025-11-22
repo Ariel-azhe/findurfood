@@ -123,6 +123,10 @@ A web application to visualize Princeton's free food email list events on an int
 3. **Set up the database:**
    - Run the SQL script from `database-schema.sql` in your Supabase SQL Editor
 
+4. **Set up Google Maps API:**
+   - Get a Google Maps API key (see `GOOGLE_MAPS_SETUP.md` for instructions)
+   - Replace `YOUR_API_KEY` in `index.html` with your actual API key
+
 ### Running the Application
 
 ```bash
