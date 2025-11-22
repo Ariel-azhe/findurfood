@@ -63,21 +63,21 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo } = req.body;
 
         // Validate required fields
-        if (!event_name || !location) {
-            return res.status(400).json({ 
-                error: 'Missing required fields', 
-                required: ['event_name', 'location'] 
+        if (!event_name) {
+            return res.status(400).json({
+                error: 'Missing required fields',
+                required: ['event_name']
             });
         }
 
-        // Validate location format (should have lat and lng)
-        if (!location.lat || !location.lng) {
-            return res.status(400).json({ 
-                error: 'Invalid location format', 
-                expected: { lat: 'number', lng: 'number' } 
+        // Validate location format if provided (should have lat and lng)
+        if (location && (!location.lat || !location.lng)) {
+            return res.status(400).json({
+                error: 'Invalid location format',
+                expected: { lat: 'number', lng: 'number' }
             });
         }
 
@@ -86,9 +86,11 @@ app.post('/api/events', async (req, res) => {
             .insert([
                 {
                     event_name,
+                    building: building || null,
+                    room_number: room_number || null,
                     diet_type: diet_type || null,
                     cuisine: cuisine || null,
-                    location,
+                    location: location || null,
                     photo: photo || null
                 }
             ])
@@ -111,10 +113,12 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
+        if (building !== undefined) updateData.building = building;
+        if (room_number !== undefined) updateData.room_number = room_number;
         if (diet_type !== undefined) updateData.diet_type = diet_type;
         if (cuisine !== undefined) updateData.cuisine = cuisine;
         if (location !== undefined) updateData.location = location;
