@@ -63,7 +63,7 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name, food_percentage } = req.body;
+        const { event_name, diet_type, cuisine, location, photo, place_name, food_percentage } = req.body;
 
         // Validate required fields
         if (!event_name || !diet_type) {
@@ -91,8 +91,6 @@ app.post('/api/events', async (req, res) => {
                     cuisine: cuisine || null,
                     location: location || null,
                     photo: photo || null,
-                    event_time: event_time || null,
-                    description: description || null,
                     food_percentage: food_percentage !== undefined ? parseInt(food_percentage) : 100
                 }
             ])
@@ -125,7 +123,7 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name, food_percentage } = req.body;
+        const { event_name, diet_type, cuisine, location, photo, place_name, food_percentage } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
@@ -134,15 +132,13 @@ app.put('/api/events/:id', async (req, res) => {
         if (cuisine !== undefined) updateData.cuisine = cuisine;
         if (location !== undefined) updateData.location = location;
         if (photo !== undefined) updateData.photo = photo;
-        if (event_time !== undefined) updateData.event_time = event_time;
-        if (description !== undefined) updateData.description = description;
         if (food_percentage !== undefined) {
             const percentage = parseInt(food_percentage);
             // Validate percentage is between 0 and 100
             if (isNaN(percentage) || percentage < 0 || percentage > 100) {
-                return res.status(400).json({ 
-                    error: 'Invalid food_percentage', 
-                    details: 'Food percentage must be between 0 and 100' 
+                return res.status(400).json({
+                    error: 'Invalid food_percentage',
+                    details: 'Food percentage must be between 0 and 100'
                 });
             }
             updateData.food_percentage = percentage;
