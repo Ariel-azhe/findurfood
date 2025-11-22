@@ -380,6 +380,9 @@ function initMap() {
     // Add building labels
     addBuildingLabels();
 
+    // Add diet type legend
+    addDietTypeLegend();
+
     // If events are already loaded, add markers now
     if (state.events.length > 0) {
         updateMapMarkers();
@@ -406,9 +409,10 @@ function updateMapMarkers() {
             lng: event.location.lng
         };
 
-        // Create custom icon based on cuisine or use default
-        const iconColor = getMarkerColor(event.cuisine);
-        
+        // Create custom icon based on diet type
+        const iconColor = getDietTypeMarkerColor(event.diet_type);
+        const dietEmoji = getDietTypeEmoji(event.diet_type);
+
         // Create large, obvious marker
         const marker = new google.maps.Marker({
             position: position,
@@ -423,7 +427,7 @@ function updateMapMarkers() {
                 strokeWeight: 4 // Thicker white border for visibility
             },
             label: {
-                text: '🍽️', // Food emoji as label
+                text: dietEmoji, // Diet-specific emoji as label
                 color: '#ffffff',
                 fontSize: '20px', // Larger label
                 fontWeight: 'bold'
@@ -591,7 +595,7 @@ window.initMap = initMap;
 // Get marker color based on cuisine type
 function getMarkerColor(cuisine) {
     if (!cuisine) return '#4285F4'; // Default blue
-    
+
     const colorMap = {
         'Thai': '#FF6B6B',
         'Italian': '#4ECDC4',
@@ -601,8 +605,74 @@ function getMarkerColor(cuisine) {
         'Indian': '#F8B500',
         'American': '#95E1D3'
     };
-    
+
     return colorMap[cuisine] || '#4285F4';
+}
+
+// Diet type color mapping for markers and legend
+const DIET_TYPE_COLORS = {
+    'vegetarian': { color: '#4CAF50', label: 'Vegetarian', emoji: '🥬' },
+    'vegan': { color: '#8BC34A', label: 'Vegan', emoji: '🌱' },
+    'gluten-free': { color: '#FF9800', label: 'Gluten-Free', emoji: '🌾' },
+    'halal': { color: '#2196F3', label: 'Halal', emoji: '☪️' },
+    'kosher': { color: '#9C27B0', label: 'Kosher', emoji: '✡️' },
+    'none': { color: '#607D8B', label: 'No Restriction', emoji: '🍽️' }
+};
+
+// Get marker color based on diet type
+function getDietTypeMarkerColor(dietType) {
+    if (!dietType) return DIET_TYPE_COLORS['none'].color;
+    const diet = DIET_TYPE_COLORS[dietType.toLowerCase()];
+    return diet ? diet.color : DIET_TYPE_COLORS['none'].color;
+}
+
+// Get emoji for diet type
+function getDietTypeEmoji(dietType) {
+    if (!dietType) return DIET_TYPE_COLORS['none'].emoji;
+    const diet = DIET_TYPE_COLORS[dietType.toLowerCase()];
+    return diet ? diet.emoji : DIET_TYPE_COLORS['none'].emoji;
+}
+
+// Create and add diet type legend to the map
+function addDietTypeLegend() {
+    if (!state.map) return;
+
+    // Create legend container
+    const legend = document.createElement('div');
+    legend.id = 'diet-legend';
+    legend.className = 'map-legend';
+
+    // Add legend title
+    const title = document.createElement('div');
+    title.className = 'legend-title';
+    title.textContent = 'Diet Types';
+    legend.appendChild(title);
+
+    // Add legend items
+    Object.entries(DIET_TYPE_COLORS).forEach(([key, value]) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+
+        const colorBox = document.createElement('span');
+        colorBox.className = 'legend-color';
+        colorBox.style.backgroundColor = value.color;
+
+        const emoji = document.createElement('span');
+        emoji.className = 'legend-emoji';
+        emoji.textContent = value.emoji;
+
+        const label = document.createElement('span');
+        label.className = 'legend-label';
+        label.textContent = value.label;
+
+        item.appendChild(colorBox);
+        item.appendChild(emoji);
+        item.appendChild(label);
+        legend.appendChild(item);
+    });
+
+    // Add legend to map
+    state.map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legend);
 }
 
 // Utility function to escape HTML
