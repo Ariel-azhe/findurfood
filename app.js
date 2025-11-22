@@ -226,8 +226,8 @@ function renderEvents() {
             ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
             : event.building || event.room_number || 'Location not specified';
 
-        const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(event.cuisine)}</span>` : '';
-        const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(event.diet_type)}</span>` : '';
+        const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
+        const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
         const photo = event.photo ? `<img src="${event.photo}" alt="${escapeHtml(event.event_name)}" class="event-photo">` : '';
         // Support both event_name (backend) and title (frontend)
         const title = event.event_name || event.title || 'Untitled Event';
@@ -235,7 +235,7 @@ function renderEvents() {
         const locationDisplay = typeof event.location === 'object'
             ? `(${event.location.lat.toFixed(4)}, ${event.location.lng.toFixed(4)})`
             : (event.location || 'Unknown location');
-        const description = event.description || event.diet_type || '';
+        const description = event.description || '';
         // Distance badge
         const distanceBadge = event.distance != null
             ? `<span class="event-distance">${formatDistance(event.distance)}</span>`
@@ -652,6 +652,12 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Utility function to capitalize first letter
+function capitalizeFirst(text) {
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 // Close modal
 function closeModal() {
     elements.postFoodModal.style.display = 'none';
@@ -748,7 +754,12 @@ async function handleFormSubmit(e) {
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error || 'Failed to post event');
+            console.error('Server returned error:', error);
+            const errorMessage = error.details || error.error || 'Failed to post event';
+            if (error.hint) {
+                console.error('Hint:', error.hint);
+            }
+            throw new Error(errorMessage);
         }
 
         // Success - reload events and close modal
