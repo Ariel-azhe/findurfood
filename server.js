@@ -63,7 +63,7 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, place_name, room_number, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, place_name, diet_type, cuisine, location, photo } = req.body;
 
         // Validate required fields
         if (!event_name) {
@@ -87,7 +87,6 @@ app.post('/api/events', async (req, res) => {
                 {
                     event_name,
                     place_name: place_name || null,
-                    room_number: room_number || null,
                     diet_type: diet_type || null,
                     cuisine: cuisine || null,
                     location: location || null,
@@ -123,12 +122,11 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, place_name, room_number, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, place_name, diet_type, cuisine, location, photo } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
         if (place_name !== undefined) updateData.place_name = place_name;
-        if (room_number !== undefined) updateData.room_number = room_number;
         if (diet_type !== undefined) updateData.diet_type = diet_type;
         if (cuisine !== undefined) updateData.cuisine = cuisine;
         if (location !== undefined) updateData.location = location;

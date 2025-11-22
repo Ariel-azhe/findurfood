@@ -161,20 +161,19 @@ function filterEvents() {
 
     // Apply search filter
     if (state.searchQuery) {
-        filtered = filtered.filter(event =>
-            event.event_name.toLowerCase().includes(state.searchQuery) ||
-            (event.place_name && event.place_name.toLowerCase().includes(state.searchQuery)) ||
-            (event.room_number && event.room_number.toLowerCase().includes(state.searchQuery)) ||
-            (event.cuisine && event.cuisine.toLowerCase().includes(state.searchQuery)) ||
-            (event.diet_type && event.diet_type.toLowerCase().includes(state.searchQuery))
-        );
         filtered = filtered.filter(event => {
             const eventName = (event.event_name || event.title || '').toLowerCase();
+            const placeName = (event.place_name || '').toLowerCase();
+            const cuisine = (event.cuisine || '').toLowerCase();
+            const dietType = (event.diet_type || '').toLowerCase();
             const locationStr = typeof event.location === 'string'
                 ? event.location.toLowerCase()
                 : '';
             const description = (event.description || '').toLowerCase();
             return eventName.includes(state.searchQuery) ||
+                   placeName.includes(state.searchQuery) ||
+                   cuisine.includes(state.searchQuery) ||
+                   dietType.includes(state.searchQuery) ||
                    locationStr.includes(state.searchQuery) ||
                    description.includes(state.searchQuery);
         });
@@ -244,9 +243,7 @@ function renderEvents() {
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
         const dateStr = formatDate(event.created_at || event.date);
-        const location = event.place_name && event.room_number
-            ? `${escapeHtml(event.place_name)}, Room ${escapeHtml(event.room_number)}`
-            : event.place_name || event.room_number || 'Location not specified';
+        const location = event.place_name || 'Location not specified';
 
         const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
@@ -834,11 +831,20 @@ async function handleFormSubmit(e) {
             photoBase64 = await getBase64FromFile(photoFile);
         }
 
+        // Combine place name and room number
+        let combinedPlaceName = placeName || '';
+        if (roomNumber && roomNumber.trim()) {
+            if (combinedPlaceName) {
+                combinedPlaceName += `, Room ${roomNumber.trim()}`;
+            } else {
+                combinedPlaceName = `Room ${roomNumber.trim()}`;
+            }
+        }
+
         // Prepare data for API
         const eventData = {
             event_name: eventName,
-            place_name: placeName,
-            room_number: roomNumber,
+            place_name: combinedPlaceName || null,
             cuisine: cuisine || null,
             diet_type: dietType || null,
             photo: photoBase64,
