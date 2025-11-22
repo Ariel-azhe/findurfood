@@ -467,7 +467,10 @@ function initMap() {
 
     // If user location is already available, add marker
     if (state.userLocation) {
+        console.log('Map initialized - adding user location marker');
         updateUserLocationMarker();
+    } else {
+        console.log('Map initialized - waiting for user location');
     }
 
     // If events are already loaded, add markers now
@@ -478,14 +481,19 @@ function initMap() {
 
 // Update user location marker on the map
 function updateUserLocationMarker() {
-    if (!state.map || !state.userLocation) return;
+    if (!state.map || !state.userLocation) {
+        console.log('Cannot update user location marker - map or location not available');
+        return;
+    }
+
+    console.log('Updating user location marker at:', state.userLocation);
 
     // Remove existing user location marker if it exists
     if (state.userLocationMarker) {
         state.userLocationMarker.setMap(null);
     }
 
-    // Use Google's default red pin marker for user location
+    // Create a blue dot marker for user location (like Google Maps "You are here")
     state.userLocationMarker = new google.maps.Marker({
         position: {
             lat: state.userLocation.lat,
@@ -493,21 +501,29 @@ function updateUserLocationMarker() {
         },
         map: state.map,
         title: 'Your Location',
-        // Use default Google Maps red pin icon (null = default)
-        icon: null,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: '#4285F4', // Google blue
+            fillOpacity: 1,
+            strokeColor: '#ffffff',
+            strokeWeight: 3
+        },
         zIndex: 2000, // Above event markers
         animation: google.maps.Animation.DROP
     });
 
     // Create info window
     const infoWindow = new google.maps.InfoWindow({
-        content: '<div style="padding: 8px; font-weight: bold;">📍 You are here</div>'
+        content: '<div style="padding: 8px; font-weight: bold; font-family: Lato, sans-serif;">📍 You are here</div>'
     });
 
     // Show info window on click
     state.userLocationMarker.addListener('click', () => {
         infoWindow.open(state.map, state.userLocationMarker);
     });
+
+    console.log('User location marker added to map');
 }
 
 // Update map markers based on filtered events
@@ -1075,7 +1091,15 @@ function getUserLocation() {
                 state.locationError = null;
                 console.log('User location obtained:', state.userLocation);
                 showLocationStatus('✅ Location detected! Distance sorting is now available.');
-                updateUserLocationMarker(); // Add marker to map
+
+                // Add marker to map if map is ready
+                if (state.map) {
+                    console.log('Map is ready - adding user location marker');
+                    updateUserLocationMarker();
+                } else {
+                    console.log('Map not ready yet - marker will be added when map initializes');
+                }
+
                 resolve(state.userLocation);
             },
             (error) => {
