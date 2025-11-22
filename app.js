@@ -124,6 +124,41 @@ function setupEventListeners() {
 
     // Form submission
     elements.postFoodForm.addEventListener('submit', handleFormSubmit);
+    
+    // Delete confirmation modal - listeners will be set up in showDeleteConfirmModal
+    const deleteModal = document.getElementById('deleteConfirmModal');
+    const closeDeleteModal = document.querySelector('.close-delete-modal');
+    
+    if (closeDeleteModal && deleteModal) {
+        closeDeleteModal.addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+            if (deleteModal._onCancel) {
+                deleteModal._onCancel();
+            }
+        });
+    }
+    
+    const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+    if (cancelDeleteBtn && deleteModal) {
+        cancelDeleteBtn.addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+            if (deleteModal._onCancel) {
+                deleteModal._onCancel();
+            }
+        });
+    }
+    
+    // Close delete modal when clicking outside
+    if (deleteModal) {
+        window.addEventListener('click', (e) => {
+            if (e.target === deleteModal) {
+                deleteModal.style.display = 'none';
+                if (deleteModal._onCancel) {
+                    deleteModal._onCancel();
+                }
+            }
+        });
+    }
 }
 
 // Load events from backend API
@@ -143,6 +178,129 @@ async function loadEvents() {
         state.events = [];
         state.filteredEvents = [];
     }
+}
+
+// Delete an event
+async function deleteEvent(eventId, slider, container) {
+    try {
+        const parsedEventId = typeof eventId === 'string' ? eventId : String(eventId);
+        console.log(`Deleting event ${parsedEventId}`);
+        
+        const response = await fetch(`/api/events/${parsedEventId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            let errorData = {};
+            try {
+                const text = await response.text();
+                errorData = JSON.parse(text);
+            } catch (e) {
+                // Ignore parse errors
+            }
+            throw new Error(errorData.details || errorData.error || `Server returned ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Event deleted successfully:', result);
+
+        // Remove event from state
+        state.events = state.events.filter(e => 
+            String(e.id) !== String(parsedEventId) && 
+            e.id !== parseInt(parsedEventId)
+        );
+        state.filteredEvents = state.filteredEvents.filter(e => 
+            String(e.id) !== String(parsedEventId) && 
+            e.id !== parseInt(parsedEventId)
+        );
+
+        // Remove marker from map
+        const markerIndex = state.markers.findIndex(m => {
+            if (!m.eventId) return false;
+            const markerEventId = String(m.eventId);
+            const targetId = String(parsedEventId);
+            return markerEventId === targetId;
+        });
+        if (markerIndex !== -1) {
+            state.markers[markerIndex].setMap(null);
+            state.markers.splice(markerIndex, 1);
+        }
+
+        // Re-render events list
+        renderEvents();
+        
+        // Update map bounds if needed
+        if (state.map && state.filteredEvents.length > 0) {
+            updateMapMarkers();
+        }
+
+        console.log('Event removed from UI and map');
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        alert(`Failed to delete event: ${error.message}`);
+        
+        // Revert slider to previous value
+        const event = state.filteredEvents.find(e => 
+            String(e.id) === String(eventId) || 
+            e.id === parseInt(eventId)
+        );
+        const originalPercentage = event?.food_percentage ?? 100;
+        
+        const valueSpan = container?.querySelector('.food-percentage-value');
+        const fillBar = container?.querySelector('.food-percentage-fill');
+        
+        if (valueSpan) {
+            valueSpan.textContent = `${originalPercentage}%`;
+            valueSpan.style.opacity = '1';
+        }
+        if (fillBar) {
+            fillBar.style.width = `${originalPercentage}%`;
+        }
+        if (slider) {
+            slider.value = originalPercentage;
+        }
+    }
+}
+
+// Show delete confirmation modal
+function showDeleteConfirmModal(eventName, onConfirm, onCancel) {
+    const deleteModal = document.getElementById('deleteConfirmModal');
+    const deleteMessage = document.getElementById('deleteConfirmMessage');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    
+    if (!deleteModal || !deleteMessage || !confirmDeleteBtn) {
+        console.error('Delete modal elements not found');
+        // Fallback to browser confirm
+        if (confirm(`Are you sure you want to delete "${eventName}"? This action cannot be undone.`)) {
+            onConfirm();
+        } else {
+            onCancel();
+        }
+        return;
+    }
+    
+    // Set the message
+    deleteMessage.textContent = `Are you sure you want to delete "${eventName}"? This action cannot be undone.`;
+    
+    // Store callbacks
+    deleteModal._onConfirm = onConfirm;
+    deleteModal._onCancel = onCancel;
+    
+    // Set up confirm button - remove any existing listeners first
+    const oldConfirmBtn = document.getElementById('confirmDeleteBtn');
+    if (oldConfirmBtn) {
+        const newConfirmBtn = oldConfirmBtn.cloneNode(true);
+        oldConfirmBtn.parentNode.replaceChild(newConfirmBtn, oldConfirmBtn);
+        newConfirmBtn.addEventListener('click', () => {
+            deleteModal.style.display = 'none';
+            if (deleteModal._onConfirm) {
+                deleteModal._onConfirm();
+            }
+        });
+    }
+    
+    // Show modal
+    deleteModal.style.display = 'flex';
 }
 
 // Filter events based on current filter and search query
@@ -243,6 +401,30 @@ function renderEvents() {
         const distanceBadge = event.distance != null
             ? `<span class="event-distance">${formatDistance(event.distance)}</span>`
             : '';
+        
+        // Food percentage slider
+        const foodPercentage = event.food_percentage !== undefined && event.food_percentage !== null 
+            ? Math.max(0, Math.min(100, parseInt(event.food_percentage))) 
+            : 100;
+        const eventIdStr = String(event.id);
+        // Store last non-zero value as data attribute (will be set on the slider element)
+        const lastNonZero = foodPercentage > 0 ? foodPercentage : 100;
+        const foodPercentageDisplay = `
+            <div class="food-percentage-container">
+                <label class="food-percentage-label">Food Remaining: <span class="food-percentage-value">${foodPercentage}%</span></label>
+                <input type="range" 
+                       class="food-percentage-slider" 
+                       min="0" 
+                       max="100" 
+                       value="${foodPercentage}" 
+                       data-event-id="${eventIdStr}"
+                       data-last-non-zero="${lastNonZero}"
+                       title="Update food remaining percentage">
+                <div class="food-percentage-bar">
+                    <div class="food-percentage-fill" style="width: ${foodPercentage}%"></div>
+                </div>
+            </div>
+        `;
 
         return `
             <div class="event-item" data-event-id="${event.id}">
@@ -255,15 +437,20 @@ function renderEvents() {
                     </div>
                 </div>
                 <p class="event-location">📍 ${location}</p>
+                ${foodPercentageDisplay}
                 <div class="event-tags">${dietType}${cuisine}</div>
                 ${description ? `<p class="event-description">${escapeHtml(description)}</p>` : ''}
             </div>
         `;
     }).join('');
 
-    // Add click handlers to event items
+    // Add click handlers to event items (but not on the slider)
     document.querySelectorAll('.event-item').forEach(item => {
-        item.addEventListener('click', () => {
+        item.addEventListener('click', (e) => {
+            // Don't trigger if clicking on the slider
+            if (e.target.closest('.food-percentage-container')) {
+                return;
+            }
             const eventId = item.dataset.eventId;
             const event = state.filteredEvents.find(e => e.id === eventId || e.id === parseInt(eventId));
             if (event) {
@@ -271,6 +458,259 @@ function renderEvents() {
             }
         });
     });
+    
+    // Initialize last non-zero value for all sliders when they're rendered
+    document.querySelectorAll('.food-percentage-slider').forEach(slider => {
+        const eventId = slider.dataset.eventId;
+        if (eventId) {
+            const event = state.filteredEvents.find(e => 
+                String(e.id) === String(eventId) || 
+                e.id === parseInt(eventId)
+            );
+            if (event) {
+                const savedPercentage = event.food_percentage;
+                // Initialize with the saved value from server (if > 0) or use data attribute
+                if (savedPercentage !== undefined && savedPercentage !== null && savedPercentage > 0) {
+                    slider._lastNonZeroValue = savedPercentage;
+                } else {
+                    const dataLastNonZero = slider.dataset.lastNonZero;
+                    slider._lastNonZeroValue = dataLastNonZero ? parseInt(dataLastNonZero) : 100;
+                }
+            }
+        }
+    });
+
+    // Add handlers for food percentage sliders using event delegation
+    // This prevents duplicate listeners when events are re-rendered
+    const eventsList = document.querySelector('.events-list');
+    if (eventsList) {
+        // Remove old listeners if they exist
+        if (eventsList._foodPercentageInputHandler) {
+            eventsList.removeEventListener('input', eventsList._foodPercentageInputHandler);
+        }
+        if (eventsList._foodPercentageChangeHandler) {
+            eventsList.removeEventListener('change', eventsList._foodPercentageChangeHandler);
+        }
+        
+        // Handler for 'input' event - only updates visual display during sliding
+        eventsList._foodPercentageInputHandler = (e) => {
+            if (!e.target.classList.contains('food-percentage-slider')) {
+                return;
+            }
+
+            const slider = e.target;
+            const rawValue = parseFloat(slider.value);
+            const newPercentage = Math.max(0, Math.min(100, Math.round(rawValue)));
+            
+            // Update the display value immediately (visual feedback only)
+            const container = slider.closest('.food-percentage-container');
+            if (!container) return;
+            
+            const valueSpan = container.querySelector('.food-percentage-value');
+            const fillBar = container.querySelector('.food-percentage-fill');
+            
+            if (valueSpan) valueSpan.textContent = `${newPercentage}%`;
+            if (fillBar) fillBar.style.width = `${newPercentage}%`;
+        };
+        
+        // Handler for 'change' event - updates tracked value and saves to server (on release)
+        eventsList._foodPercentageChangeHandler = async (e) => {
+            // Only handle events from food percentage sliders
+            if (!e.target.classList.contains('food-percentage-slider')) {
+                return;
+            }
+
+            const slider = e.target;
+            const eventId = slider.dataset.eventId;
+            
+            if (!eventId) {
+                console.error('No event ID found on slider');
+                return;
+            }
+
+            // Get the event data to find the last saved value
+            const event = state.filteredEvents.find(e => 
+                String(e.id) === String(eventId) || 
+                e.id === parseInt(eventId)
+            );
+            
+            // Initialize last non-zero value from event data (the saved value from server)
+            // This is the value BEFORE the user started sliding
+            if (slider._lastNonZeroValue === undefined) {
+                const savedPercentage = event?.food_percentage;
+                if (savedPercentage !== undefined && savedPercentage !== null && savedPercentage > 0) {
+                    slider._lastNonZeroValue = savedPercentage;
+                } else {
+                    // Fallback to data attribute or default
+                    const dataLastNonZero = slider.dataset.lastNonZero;
+                    slider._lastNonZeroValue = dataLastNonZero ? parseInt(dataLastNonZero) : 100;
+                }
+            }
+
+            // Read slider value - ensure it's a valid number between 0 and 100
+            let rawValue = parseFloat(slider.value);
+            
+            // Ensure we have a valid number
+            if (isNaN(rawValue)) {
+                // Fallback: try to get from the min/max attributes
+                const min = parseFloat(slider.getAttribute('min')) || 0;
+                const max = parseFloat(slider.getAttribute('max')) || 100;
+                rawValue = (min + max) / 2; // Default to middle if value is invalid
+            }
+            
+            // Clamp to 0-100 range
+            const newPercentage = Math.max(0, Math.min(100, Math.round(rawValue)));
+            
+            // Ensure slider value is set correctly (in case of any browser quirks)
+            if (Math.abs(parseFloat(slider.value) - newPercentage) > 0.1) {
+                slider.value = newPercentage;
+            }
+            
+            // Update the display value (in case it wasn't updated during input)
+            const container = slider.closest('.food-percentage-container');
+            if (!container) return;
+            
+            const valueSpan = container.querySelector('.food-percentage-value');
+            const fillBar = container.querySelector('.food-percentage-fill');
+            
+            if (valueSpan) valueSpan.textContent = `${newPercentage}%`;
+            if (fillBar) fillBar.style.width = `${newPercentage}%`;
+            
+            // Add visual feedback (saving indicator)
+            if (valueSpan) {
+                valueSpan.style.opacity = '0.7';
+            }
+            
+            // Check if percentage is 0% - if so, show delete confirmation modal
+            if (newPercentage === 0) {
+                const eventName = event?.event_name || 'this event';
+                
+                // Show custom delete confirmation modal
+                showDeleteConfirmModal(eventName, () => {
+                    // User confirmed deletion
+                    deleteEvent(eventId, slider, container);
+                }, () => {
+                    // User cancelled - revert to last saved non-zero value
+                    // Use the value from event data (saved on server) or the tracked value
+                    const lastNonZero = slider._lastNonZeroValue || event?.food_percentage || 100;
+                    if (valueSpan) valueSpan.textContent = `${lastNonZero}%`;
+                    if (fillBar) fillBar.style.width = `${lastNonZero}%`;
+                    slider.value = lastNonZero;
+                    if (valueSpan) valueSpan.style.opacity = '1';
+                });
+                
+                return; // Don't proceed with update
+            }
+            
+            // Don't update _lastNonZeroValue here - we'll update it only after successful server save
+            
+            // Update on server after a short delay (debounce)
+            if (slider._updateTimeout) {
+                clearTimeout(slider._updateTimeout);
+            }
+            
+            slider._updateTimeout = setTimeout(async () => {
+                try {
+                    // Parse event ID - handle both string and number formats
+                    const parsedEventId = typeof eventId === 'string' ? eventId : String(eventId);
+                    
+                    console.log(`Updating food percentage for event ${parsedEventId} to ${newPercentage}%`);
+                    
+                    const url = `/api/events/${parsedEventId}`;
+                    console.log(`Making PUT request to: ${url}`);
+                    
+                    const response = await fetch(url, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ food_percentage: newPercentage })
+                    });
+
+                    console.log(`Response status: ${response.status} ${response.statusText}`);
+                    console.log(`Response ok: ${response.ok}`);
+
+                    if (!response.ok) {
+                        let errorData = {};
+                        try {
+                            const text = await response.text();
+                            console.error('Error response text:', text);
+                            errorData = JSON.parse(text);
+                        } catch (e) {
+                            console.error('Could not parse error response as JSON');
+                        }
+                        throw new Error(errorData.details || errorData.error || `Server returned ${response.status}: ${response.statusText}`);
+                    }
+
+                    const updatedEvent = await response.json();
+                    console.log('Food percentage updated successfully:', updatedEvent);
+
+                    // Update the event in state (both filteredEvents and events arrays)
+                    const event = state.filteredEvents.find(e => 
+                        String(e.id) === String(parsedEventId) || 
+                        e.id === parseInt(parsedEventId)
+                    );
+                    if (event) {
+                        event.food_percentage = newPercentage;
+                    }
+                    
+                    // Also update in the main events array
+                    const mainEvent = state.events.find(e => 
+                        String(e.id) === String(parsedEventId) || 
+                        e.id === parseInt(parsedEventId)
+                    );
+                    if (mainEvent) {
+                        mainEvent.food_percentage = newPercentage;
+                    }
+
+                    // Update last non-zero value only after successful save (and only if > 0)
+                    if (newPercentage > 0) {
+                        slider._lastNonZeroValue = newPercentage;
+                    }
+
+                    // Remove saving indicator
+                    if (valueSpan) {
+                        valueSpan.style.opacity = '1';
+                    }
+                } catch (error) {
+                    console.error('Error updating food percentage:', error);
+                    console.error('Error details:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack,
+                        eventId: parsedEventId,
+                        newPercentage: newPercentage
+                    });
+                    
+                    // Revert the display
+                    const event = state.filteredEvents.find(e => 
+                        String(e.id) === String(eventId) || 
+                        e.id === parseInt(eventId)
+                    );
+                    
+                    const originalPercentage = event?.food_percentage ?? 100;
+                    
+                    if (valueSpan) {
+                        valueSpan.textContent = `${originalPercentage}%`;
+                        valueSpan.style.opacity = '1';
+                    }
+                    if (fillBar) {
+                        fillBar.style.width = `${originalPercentage}%`;
+                    }
+                    slider.value = originalPercentage;
+                    
+                    // Show error message to user with more details
+                    const errorMsg = error.message || 'Network error';
+                    console.error('Showing error to user:', errorMsg);
+                    alert(`Failed to update food percentage: ${errorMsg}`);
+                }
+            }, 500); // Wait 500ms after user stops sliding
+        };
+        
+        // Add both event listeners
+        eventsList.addEventListener('input', eventsList._foodPercentageInputHandler, true);
+        eventsList.addEventListener('change', eventsList._foodPercentageChangeHandler, true);
+    }
 }
 
 // Format date for display
@@ -913,6 +1353,7 @@ async function handleFormSubmit(e) {
     const cuisine = formData.get('cuisine');
     const dietType = formData.get('dietType');
     const photoFile = formData.get('photo');
+    const foodPercentage = formData.get('foodPercentage') || '100';
 
     try {
         // Show loading state
@@ -961,7 +1402,8 @@ async function handleFormSubmit(e) {
             cuisine: cuisine || null,
             diet_type: dietType || null,
             photo: photoBase64,
-            location: eventLocation || null
+            location: eventLocation || null,
+            food_percentage: parseInt(foodPercentage) || 100
         };
 
         // Submit to API

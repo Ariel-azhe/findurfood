@@ -435,6 +435,33 @@ footer {
     color: #333;
 }
 
+.modal-body {
+    padding: 25px 30px;
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 20px 30px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.close-delete-modal {
+    font-size: 2rem;
+    color: #999;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.3s;
+}
+
+.close-delete-modal:hover {
+    color: #333;
+}
+
 /* Form Styles */
 #postFoodForm {
     padding: 30px;
@@ -723,6 +750,90 @@ footer {
 
 .close-camera-modal:hover {
     color: #333;
+}
+
+/* Food Percentage Slider Styles */
+.food-percentage-container {
+    margin: 12px 0;
+    padding: 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+}
+
+.food-percentage-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.food-percentage-value {
+    color: #FF8F00;
+    font-weight: 600;
+}
+
+.food-percentage-slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: #e5e5e5;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 10px 0;
+    cursor: pointer;
+}
+
+.food-percentage-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #FF8F00;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+
+.food-percentage-slider::-webkit-slider-thumb:hover {
+    background: #E77500;
+    transform: scale(1.1);
+}
+
+.food-percentage-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #FF8F00;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+}
+
+.food-percentage-slider::-moz-range-thumb:hover {
+    background: #E77500;
+    transform: scale(1.1);
+}
+
+.food-percentage-bar {
+    width: 100%;
+    height: 6px;
+    background: #e5e5e5;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.food-percentage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF8F00 0%, #FFB74D 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
 }
 
 /* Responsive camera modal */

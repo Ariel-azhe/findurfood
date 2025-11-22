@@ -63,7 +63,7 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name, food_percentage } = req.body;
 
         // Validate required fields
         if (!event_name || !diet_type) {
@@ -94,7 +94,8 @@ app.post('/api/events', async (req, res) => {
                     location: location || null,
                     photo: photo || null,
                     event_time: event_time || null,
-                    description: description || null
+                    description: description || null,
+                    food_percentage: food_percentage !== undefined ? parseInt(food_percentage) : 100
                 }
             ])
             .select()
@@ -126,7 +127,7 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name, food_percentage } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
@@ -139,27 +140,68 @@ app.put('/api/events/:id', async (req, res) => {
         if (photo !== undefined) updateData.photo = photo;
         if (event_time !== undefined) updateData.event_time = event_time;
         if (description !== undefined) updateData.description = description;
-        if (event_time !== undefined) updateData.event_time = event_time;
-        if (description !== undefined) updateData.description = description;
         if (place_name !== undefined) updateData.place_name = place_name;
+        if (food_percentage !== undefined) {
+            const percentage = parseInt(food_percentage);
+            // Validate percentage is between 0 and 100
+            if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+                return res.status(400).json({ 
+                    error: 'Invalid food_percentage', 
+                    details: 'Food percentage must be between 0 and 100' 
+                });
+            }
+            updateData.food_percentage = percentage;
+        }
 
+        // First verify the event exists
+        const { data: existingData, error: checkError } = await supabase
+            .from('free_food_events')
+            .select('id')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (checkError) {
+            console.error('Supabase error checking event:', checkError);
+            return res.status(500).json({ error: 'Failed to check event', details: checkError.message });
+        }
+
+        if (!existingData) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Perform the update - don't use maybeSingle(), just select() and check array
         const { data, error } = await supabase
             .from('free_food_events')
             .update(updateData)
             .eq('id', id)
-            .select()
-            .single();
+            .select();
 
         if (error) {
-            console.error('Supabase error:', error);
+            console.error('Supabase error updating event:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
             return res.status(500).json({ error: 'Failed to update event', details: error.message });
         }
 
-        if (!data) {
-            return res.status(404).json({ error: 'Event not found' });
+        // Check if we got data back
+        if (!data || data.length === 0) {
+            // This shouldn't happen if the event exists, but handle it anyway
+            console.warn(`Update succeeded but no data returned for event ${id}`);
+            // Fetch the updated event separately
+            const { data: fetchedData, error: fetchError } = await supabase
+                .from('free_food_events')
+                .select('*')
+                .eq('id', id)
+                .maybeSingle();
+            
+            if (fetchError || !fetchedData) {
+                return res.status(500).json({ error: 'Update may have succeeded but failed to fetch updated data' });
+            }
+            
+            return res.json(fetchedData);
         }
 
-        res.json(data);
+        // Return the first (and should be only) result
+        res.json(data[0]);
     } catch (error) {
         console.error('Server error:', error);
         res.status(500).json({ error: 'Internal server error', details: error.message });
