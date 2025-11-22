@@ -163,7 +163,7 @@ function filterEvents() {
     if (state.searchQuery) {
         filtered = filtered.filter(event =>
             event.event_name.toLowerCase().includes(state.searchQuery) ||
-            (event.building && event.building.toLowerCase().includes(state.searchQuery)) ||
+            (event.place_name && event.place_name.toLowerCase().includes(state.searchQuery)) ||
             (event.room_number && event.room_number.toLowerCase().includes(state.searchQuery)) ||
             (event.cuisine && event.cuisine.toLowerCase().includes(state.searchQuery)) ||
             (event.diet_type && event.diet_type.toLowerCase().includes(state.searchQuery))
@@ -244,9 +244,9 @@ function renderEvents() {
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
         const dateStr = formatDate(event.created_at || event.date);
-        const location = event.building && event.room_number
-            ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
-            : event.building || event.room_number || 'Location not specified';
+        const location = event.place_name && event.room_number
+            ? `${escapeHtml(event.place_name)}, Room ${escapeHtml(event.room_number)}`
+            : event.place_name || event.room_number || 'Location not specified';
 
         const cuisine = event.cuisine ? `<span class="event-tag cuisine-tag">${escapeHtml(capitalizeFirst(event.cuisine))}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag diet-tag">${escapeHtml(capitalizeFirst(event.diet_type))}</span>` : '';
@@ -815,7 +815,7 @@ async function handleFormSubmit(e) {
 
     const formData = new FormData(e.target);
     const eventName = formData.get('eventName');
-    const building = formData.get('building');
+    const placeName = formData.get('placeName');
     const roomNumber = formData.get('roomNumber');
     const cuisine = formData.get('cuisine');
     const dietType = formData.get('dietType');
@@ -837,7 +837,7 @@ async function handleFormSubmit(e) {
         // Prepare data for API
         const eventData = {
             event_name: eventName,
-            building: building,
+            place_name: placeName,
             room_number: roomNumber,
             cuisine: cuisine || null,
             diet_type: dietType || null,
