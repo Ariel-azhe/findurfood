@@ -806,6 +806,64 @@ function getBase64FromFile(file) {
     });
 }
 
+// Geocode a place name to coordinates using Google Maps API
+// Restricts search to Princeton University area
+async function geocodePlaceName(placeName) {
+    if (!placeName || !google || !google.maps) {
+        return null;
+    }
+
+    return new Promise((resolve) => {
+        const geocoder = new google.maps.Geocoder();
+
+        // Princeton University coordinates for biasing results
+        const princetonCenter = { lat: 40.3430, lng: -74.6551 };
+
+        // Geocode with bias towards Princeton
+        geocoder.geocode({
+            address: `${placeName}, Princeton University, Princeton, NJ`,
+            componentRestrictions: {
+                country: 'US',
+                administrativeArea: 'NJ',
+                locality: 'Princeton'
+            },
+            bounds: {
+                north: 40.3530,
+                south: 40.3330,
+                east: -74.6451,
+                west: -74.6651
+            }
+        }, (results, status) => {
+            if (status === 'OK' && results && results.length > 0) {
+                const location = results[0].geometry.location;
+                const coords = {
+                    lat: location.lat(),
+                    lng: location.lng()
+                };
+
+                // Validate that the result is actually near Princeton (within ~5 miles)
+                const distanceFromPrinceton = calculateDistance(
+                    princetonCenter.lat,
+                    princetonCenter.lng,
+                    coords.lat,
+                    coords.lng
+                );
+
+                if (distanceFromPrinceton < 5) {
+                    console.log(`Geocoded "${placeName}" to:`, coords);
+                    resolve(coords);
+                } else {
+                    console.warn(`Geocoded location for "${placeName}" is too far from Princeton (${distanceFromPrinceton.toFixed(1)} miles)`);
+                    resolve(null);
+                }
+            } else {
+                console.warn(`Geocoding failed for "${placeName}":`, status);
+                resolve(null);
+            }
+        });
+    });
+}
+
 // Handle form submission
 async function handleFormSubmit(e) {
     e.preventDefault();
@@ -841,6 +899,23 @@ async function handleFormSubmit(e) {
             }
         }
 
+        // Geocode the place name to get actual Princeton coordinates
+        let eventLocation = null;
+        if (placeName) {
+            eventLocation = await geocodePlaceName(placeName);
+            if (!eventLocation) {
+                // Fallback: try just the building name without "Princeton University"
+                console.log('Retrying geocoding with simpler query...');
+                eventLocation = await geocodePlaceName(`${placeName}, Princeton, NJ`);
+            }
+        }
+
+        // If geocoding fails, fall back to user's current location
+        if (!eventLocation) {
+            console.warn('Geocoding failed, using user location as fallback');
+            eventLocation = state.userLocation;
+        }
+
         // Prepare data for API
         const eventData = {
             event_name: eventName,
@@ -848,7 +923,7 @@ async function handleFormSubmit(e) {
             cuisine: cuisine || null,
             diet_type: dietType || null,
             photo: photoBase64,
-            location: state.userLocation || null
+            location: eventLocation || null
         };
 
         // Submit to API
