@@ -454,6 +454,30 @@ function renderEvents() {
             const eventId = item.dataset.eventId;
             const event = state.filteredEvents.find(e => e.id === eventId || e.id === parseInt(eventId));
             if (event) {
+                // Find the corresponding marker and open its info window
+                const marker = state.markers.find(m => m.eventId === event.id);
+                if (marker) {
+                    // Close previous info window if one is open
+                    if (state.currentInfoWindow) {
+                        state.currentInfoWindow.close();
+                    }
+                    // Find and open the info window for this marker
+                    // We need to recreate the info window since we didn't store it
+                    const infoContent = `
+                        <div style="padding: 12px; min-width: 220px; font-family: Arial, sans-serif;">
+                            ${event.photo ? `<img src="${event.photo}" alt="Food Photo" style="width: 100%; max-width: 280px; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 10px;">` : ''}
+                            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #333; font-weight: bold;">${escapeHtml(event.event_name)}</h3>
+                            ${event.cuisine ? `<p style="margin: 6px 0; color: #555; font-size: 14px;"><strong>Cuisine:</strong> ${escapeHtml(event.cuisine)}</p>` : ''}
+                            ${event.diet_type ? `<p style="margin: 6px 0; color: #555; font-size: 14px;"><strong>Diet Type:</strong> ${escapeHtml(event.diet_type)}</p>` : ''}
+                            ${event.created_at ? `<p style="margin: 6px 0; color: #888; font-size: 12px;">Added: ${formatDate(new Date(event.created_at))}</p>` : ''}
+                        </div>
+                    `;
+                    const infoWindow = new google.maps.InfoWindow({
+                        content: infoContent
+                    });
+                    infoWindow.open(state.map, marker);
+                    state.currentInfoWindow = infoWindow;
+                }
                 focusOnEvent(event);
             }
         });
@@ -1537,7 +1561,8 @@ function getUserLocation() {
                 };
                 state.locationError = null;
                 console.log('User location obtained:', state.userLocation);
-                showLocationStatus('✅ Location detected! Distance sorting is now available.');
+                // Hide the location status message
+                showLocationStatus('');
 
                 // Add marker to map if map is ready
                 if (state.map) {
