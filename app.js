@@ -7,6 +7,7 @@ const state = {
     map: null,
     markers: [], // Store Google Maps markers for events
     buildingMarkers: [], // Store building markers
+    userLocationMarker: null, // User's location marker
     userLocation: null, // { lat: number, lng: number }
     locationError: null
 };
@@ -380,10 +381,49 @@ function initMap() {
     // Add building labels
     addBuildingLabels();
 
+    // If user location is already available, add marker
+    if (state.userLocation) {
+        updateUserLocationMarker();
+    }
+
     // If events are already loaded, add markers now
     if (state.events.length > 0) {
         updateMapMarkers();
     }
+}
+
+// Update user location marker on the map
+function updateUserLocationMarker() {
+    if (!state.map || !state.userLocation) return;
+
+    // Remove existing user location marker if it exists
+    if (state.userLocationMarker) {
+        state.userLocationMarker.setMap(null);
+    }
+
+    // Use Google's default red pin marker for user location
+    state.userLocationMarker = new google.maps.Marker({
+        position: {
+            lat: state.userLocation.lat,
+            lng: state.userLocation.lng
+        },
+        map: state.map,
+        title: 'Your Location',
+        // Use default Google Maps red pin icon (null = default)
+        icon: null,
+        zIndex: 2000, // Above event markers
+        animation: google.maps.Animation.DROP
+    });
+
+    // Create info window
+    const infoWindow = new google.maps.InfoWindow({
+        content: '<div style="padding: 8px; font-weight: bold;">📍 You are here</div>'
+    });
+
+    // Show info window on click
+    state.userLocationMarker.addListener('click', () => {
+        infoWindow.open(state.map, state.userLocationMarker);
+    });
 }
 
 // Update map markers based on filtered events
@@ -748,6 +788,7 @@ function getUserLocation() {
                 };
                 state.locationError = null;
                 console.log('User location obtained:', state.userLocation);
+                updateUserLocationMarker(); // Add marker to map
                 resolve(state.userLocation);
             },
             (error) => {

@@ -7,10 +7,12 @@ CREATE TABLE IF NOT EXISTS free_food_events (
     event_name TEXT NOT NULL,
     building TEXT, -- Building name/location (e.g., "Frist Campus Center")
     room_number TEXT, -- Room number (e.g., "201", "Main Hall")
+    place_name TEXT, -- Place name/location identifier
     diet_type TEXT, -- e.g., "vegetarian", "vegan", "gluten-free", null for no restrictions
     cuisine TEXT, -- e.g., "Thai", "Mexican", "Italian", null if not specified
     location JSONB, -- Optional: Stores { "lat": number, "lng": number } for map display
     photo TEXT, -- Base64 encoded image string, null if no photo
+    description TEXT, -- Optional: Additional description/details about the event
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
@@ -32,6 +34,9 @@ CREATE INDEX IF NOT EXISTS idx_free_food_events_building ON free_food_events(bui
 
 -- Create index on room_number for filtering
 CREATE INDEX IF NOT EXISTS idx_free_food_events_room_number ON free_food_events(room_number);
+
+-- Create index on place_name for filtering
+CREATE INDEX IF NOT EXISTS idx_free_food_events_place_name ON free_food_events(place_name);
 
 -- Function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
