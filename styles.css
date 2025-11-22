@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Lato', sans-serif;
-    background: white;
+    background: linear-gradient(135deg, #fff9f0 0%, #fff5e6 50%, #ffefe0 100%);
     min-height: 100vh;
     color: #333;
 }
@@ -48,27 +48,26 @@ header h1 {
 }
 
 header h1 .highlight {
-    color: #ffffff;
+    color: #E77500;
     font-style: italic;
 }
 
 .subtitle {
     font-size: 0.9rem;
-    opacity: 0.95;
-    font-weight: 400;
+    font-weight: 500;
     letter-spacing: 2px;
-    color: #ffffff;
+    color: #666;
     font-family: 'Lato', sans-serif;
     text-transform: uppercase;
 }
 
 main {
     flex: 1;
-    background: #ffffff;
-    border-radius: 8px;
+    background: linear-gradient(180deg, #ffffff 0%, #fffcf8 100%);
+    border-radius: 12px;
     padding: 30px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border: 1px solid #e8e8e8;
+    box-shadow: 0 4px 24px rgba(255, 143, 0, 0.08), 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 143, 0, 0.12);
 }
 
 .controls {
@@ -98,10 +97,10 @@ main {
 
 .sort-dropdown {
     padding: 10px 15px;
-    border: 2px solid #e0e0e0;
-    border-radius: 6px;
+    border: 2px solid #ede8e3;
+    border-radius: 8px;
     font-size: 0.95rem;
-    background: white;
+    background: #fffdfb;
     color: #333;
     cursor: pointer;
     transition: all 0.3s;
@@ -118,11 +117,12 @@ main {
 .search-bar input {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #e0e0e0;
-    border-radius: 6px;
+    border: 2px solid #ede8e3;
+    border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s;
     font-family: 'Lato', sans-serif;
+    background: #fffdfb;
 }
 
 .search-bar input:focus {
@@ -139,9 +139,9 @@ main {
 .filter-btn {
     padding: 10px 20px;
     border: 2px solid #FF8F00; /* Princeton Orange */
-    background: white;
+    background: #fffdfb;
     color: #FF8F00;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 500;
@@ -150,7 +150,8 @@ main {
 }
 
 .filter-btn:hover {
-    background: #fff8f0;
+    background: #fff3e6;
+    box-shadow: 0 2px 8px rgba(255, 143, 0, 0.15);
 }
 
 .filter-btn.active {
@@ -188,11 +189,11 @@ main {
 }
 
 .map-container {
-    border-radius: 6px;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: #f5f5f5;
-    border: 1px solid #e8e8e8;
+    box-shadow: 0 4px 16px rgba(255, 143, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: #faf8f5;
+    border: 1px solid rgba(255, 143, 0, 0.12);
 }
 
 #map {
@@ -217,7 +218,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background: linear-gradient(135deg, #fff8f0 0%, #ffe8d6 100%);
     color: #666;
     font-size: 1.1rem;
 }
@@ -225,11 +226,12 @@ main {
 .events-sidebar {
     display: flex;
     flex-direction: column;
-    background: #fafafa;
-    border-radius: 6px;
+    background: linear-gradient(180deg, #fffaf5 0%, #fff7f0 100%);
+    border-radius: 10px;
     padding: 20px;
     overflow-y: auto;
-    border: 1px solid #e8e8e8;
+    border: 1px solid rgba(255, 143, 0, 0.15);
+    box-shadow: inset 0 2px 8px rgba(255, 143, 0, 0.03);
 }
 
 .events-sidebar h2 {
@@ -249,19 +251,20 @@ main {
 }
 
 .event-item {
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #fffdf9 100%);
     padding: 18px;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left: 3px solid #FF8F00; /* Princeton Orange accent */
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(255, 143, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+    border-left: 4px solid #FF8F00; /* Princeton Orange accent */
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .event-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 143, 0, 0.15), 0 3px 10px rgba(0, 0, 0, 0.08);
     border-left-color: #E77500;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f0 100%);
 }
 
 .event-header {
@@ -369,17 +372,20 @@ main {
 
 .no-events {
     text-align: center;
-    color: #999;
+    color: #888;
     padding: 40px 20px;
     font-size: 1rem;
+    background: linear-gradient(135deg, #fff8f0 0%, #fff3e6 100%);
+    border-radius: 8px;
+    border: 1px dashed rgba(255, 143, 0, 0.3);
 }
 
 footer {
     text-align: center;
-    color: white;
+    color: #FF8F00;
     margin-top: 20px;
     padding: 15px 0;
-    opacity: 0.8;
+    font-weight: 500;
 }
 
 /* Modal Styles */
