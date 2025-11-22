@@ -63,7 +63,7 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
+        const { event_name, diet_type, cuisine, location, photo, event_time, place_name } = req.body;
 
         // Validate required fields
         if (!event_name || !diet_type) {
@@ -91,8 +91,7 @@ app.post('/api/events', async (req, res) => {
                     cuisine: cuisine || null,
                     location: location || null,
                     photo: photo || null,
-                    event_time: event_time || null,
-                    description: description || null
+                    event_time: event_time || null
                 }
             ])
             .select()
@@ -124,7 +123,7 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
+        const { event_name, diet_type, cuisine, location, photo, event_time, place_name } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
@@ -134,7 +133,6 @@ app.put('/api/events/:id', async (req, res) => {
         if (location !== undefined) updateData.location = location;
         if (photo !== undefined) updateData.photo = photo;
         if (event_time !== undefined) updateData.event_time = event_time;
-        if (description !== undefined) updateData.description = description;
 
         const { data, error } = await supabase
             .from('free_food_events')
