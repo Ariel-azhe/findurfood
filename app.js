@@ -9,7 +9,8 @@ const state = {
     buildingMarkers: [], // Store building markers
     userLocationMarker: null, // User's location marker
     userLocation: null, // { lat: number, lng: number }
-    locationError: null
+    locationError: null,
+    currentInfoWindow: null // Currently open info window on map
 };
 
 // DOM Elements
@@ -1029,7 +1030,13 @@ function updateMapMarkers() {
 
         // Add click listener to marker
         marker.addListener('click', () => {
+            // Close previous info window if one is open
+            if (state.currentInfoWindow) {
+                state.currentInfoWindow.close();
+            }
+            // Open new info window and store reference
             infoWindow.open(state.map, marker);
+            state.currentInfoWindow = infoWindow;
             focusOnEvent(event);
         });
 
