@@ -288,11 +288,21 @@ main {
 .event-tag {
     display: inline-block;
     padding: 4px 10px;
-    background: #e8eaf6;
-    color: #667eea;
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 500;
+}
+
+.diet-tag {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #a8dfb4;
+}
+
+.cuisine-tag {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #e65100;
+    border: 1px solid #ffcc80;
 }
 
 .no-events {
