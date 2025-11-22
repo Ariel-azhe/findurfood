@@ -66,10 +66,10 @@ app.post('/api/events', async (req, res) => {
         const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
 
         // Validate required fields
-        if (!event_name) {
+        if (!event_name || !diet_type) {
             return res.status(400).json({
                 error: 'Missing required fields',
-                required: ['event_name']
+                required: ['event_name', 'diet_type']
             });
         }
 
@@ -89,7 +89,7 @@ app.post('/api/events', async (req, res) => {
                     building: building || null,
                     room_number: room_number || null,
                     place_name: place_name || null,
-                    diet_type: diet_type || null,
+                    diet_type,
                     cuisine: cuisine || null,
                     location: location || null,
                     photo: photo || null,
