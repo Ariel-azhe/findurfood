@@ -222,7 +222,7 @@ function renderEvents() {
     }
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
-        const timeStr = event.event_time ? escapeHtml(event.event_time) : 'Time TBD';
+        const timeStr = event.event_time ? escapeHtml(event.event_time) : formatUploadTime(event.created_at);
         // Use place_name if available, otherwise fall back to building/room_number
         const location = event.place_name || 
             (event.building && event.room_number
@@ -278,6 +278,25 @@ function formatDate(date) {
     const d = new Date(date);
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return d.toLocaleDateString('en-US', options);
+}
+
+// Format time from timestamp to 12-hour format with AM/PM
+function formatUploadTime(timestamp) {
+    if (!timestamp) return 'Time TBD';
+
+    const date = new Date(timestamp);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    // Convert to 12-hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+
+    // Pad minutes with leading zero if needed
+    const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+
+    return `${hours}:${minutesStr}${ampm}`;
 }
 
 // Convert time string (e.g., "9:00PM") to minutes for sorting
