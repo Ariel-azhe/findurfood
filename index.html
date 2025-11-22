@@ -82,6 +82,24 @@
         </footer>
     </div>
 
+    <!-- Camera Popup Modal -->
+    <div id="cameraModal" class="modal camera-modal">
+        <div class="modal-content camera-modal-content">
+            <div class="modal-header">
+                <h2>Take Photo</h2>
+                <span class="close-camera-modal">&times;</span>
+            </div>
+            <div class="camera-container">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <canvas id="cameraCanvas" style="display: none;"></canvas>
+            </div>
+            <div class="camera-controls">
+                <button type="button" id="captureBtn" class="btn-primary">📸 Capture Photo</button>
+                <button type="button" id="closeCameraBtn" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Post Free Food Modal -->
     <div id="postFoodModal" class="modal">
         <div class="modal-content">
