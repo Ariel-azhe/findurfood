@@ -206,7 +206,7 @@ function renderEvents() {
     }
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
-        const dateStr = formatDate(event.created_at);
+        const dateStr = formatDate(event.created_at || event.date);
         const location = event.building && event.room_number
             ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
             : event.building || event.room_number || 'Location not specified';
@@ -214,7 +214,6 @@ function renderEvents() {
         const cuisine = event.cuisine ? `<span class="event-tag">${escapeHtml(event.cuisine)}</span>` : '';
         const dietType = event.diet_type ? `<span class="event-tag">${escapeHtml(event.diet_type)}</span>` : '';
         const photo = event.photo ? `<img src="${event.photo}" alt="${escapeHtml(event.event_name)}" class="event-photo">` : '';
-        const dateStr = formatDate(event.date);
         // Support both event_name (backend) and title (frontend)
         const title = event.event_name || event.title || 'Untitled Event';
         // Format location for display
@@ -231,18 +230,14 @@ function renderEvents() {
             <div class="event-item" data-event-id="${event.id}">
                 ${photo}
                 <div class="event-header">
-                    <h3>${escapeHtml(event.event_name)}</h3>
-                    <span class="event-date">${dateStr}</span>
-                </div>
-                <p class="event-location">📍 ${location}</p>
-                <div class="event-tags">${cuisine}${dietType}</div>
                     <h3>${escapeHtml(title)}</h3>
                     <div class="event-meta">
                         ${distanceBadge}
                         <span class="event-date">${dateStr}</span>
                     </div>
                 </div>
-                <p class="event-location">Location: ${escapeHtml(locationDisplay)}</p>
+                <p class="event-location">📍 ${location}</p>
+                <div class="event-tags">${cuisine}${dietType}</div>
                 ${description ? `<p class="event-description">${escapeHtml(description)}</p>` : ''}
             </div>
         `;
@@ -252,7 +247,6 @@ function renderEvents() {
     document.querySelectorAll('.event-item').forEach(item => {
         item.addEventListener('click', () => {
             const eventId = item.dataset.eventId;
-            const event = state.events.find(e => e.id === eventId);
             const event = state.filteredEvents.find(e => e.id === eventId || e.id === parseInt(eventId));
             if (event) {
                 focusOnEvent(event);
@@ -407,6 +401,9 @@ async function handleFormSubmit(e) {
         const submitBtn = e.target.querySelector('button[type="submit"]');
         submitBtn.textContent = 'Post Free Food';
         submitBtn.disabled = false;
+    }
+}
+
 // Request user's geolocation
 function getUserLocation() {
     return new Promise((resolve) => {
