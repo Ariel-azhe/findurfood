@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Food - Princeton Free Food Map</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Find Your Food</h1>
+            <p class="subtitle">Princeton Free Food Events</p>
+        </header>
+
+        <main>
+            <div class="controls">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search events...">
+                </div>
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="today">Today</button>
+                    <button class="filter-btn" data-filter="this-week">This Week</button>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="map-container">
+                    <div id="map">
+                        <!-- Map will be rendered here -->
+                        <div class="map-placeholder">
+                            <p>Map will be displayed here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="events-sidebar">
+                    <h2>Events</h2>
+                    <div id="eventsList" class="events-list">
+                        <!-- Events will be dynamically populated here -->
+                        <div class="event-item">
+                            <div class="event-header">
+                                <h3>Sample Event</h3>
+                                <span class="event-date">Jan 15, 2024</span>
+                            </div>
+                            <p class="event-location">Location: Sample Location</p>
+                            <p class="event-description">Sample description of the free food event...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Data from Princeton Free Food Email List</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
