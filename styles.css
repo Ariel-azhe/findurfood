@@ -5,8 +5,8 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
     min-height: 100vh;
     color: #333;
 }
@@ -51,35 +51,36 @@ header {
 
 header h1 {
     font-size: 2.8rem;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 5px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-    letter-spacing: -1px;
-    background: linear-gradient(135deg, #ffffff 0%, #FFE4B5 50%, #FFC107 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 1px;
+    color: #FF8F00; /* Princeton Orange */
+    font-family: 'Georgia', serif;
 }
 
 header h1 .highlight {
-    color: #FF6B6B;
-    -webkit-text-fill-color: #FF6B6B;
+    color: #ffffff;
     font-style: italic;
 }
 
 .subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    font-weight: 300;
-    letter-spacing: 1px;
+    font-size: 0.9rem;
+    opacity: 0.95;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: #ffffff;
+    font-family: 'Georgia', serif;
+    text-transform: uppercase;
 }
 
 main {
     flex: 1;
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e8e8e8;
 }
 
 .controls {
@@ -110,32 +111,36 @@ main {
 .sort-dropdown {
     padding: 10px 15px;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 0.95rem;
     background: white;
     color: #333;
     cursor: pointer;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
     min-width: 180px;
+    font-family: 'Georgia', serif;
 }
 
 .sort-dropdown:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #FF8F00; /* Princeton Orange */
+    box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.1);
 }
 
 .search-bar input {
     width: 100%;
     padding: 12px 16px;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 1rem;
-    transition: border-color 0.3s;
+    transition: all 0.3s;
+    font-family: 'Georgia', serif;
 }
 
 .search-bar input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #FF8F00; /* Princeton Orange */
+    box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.1);
 }
 
 .filters {
@@ -145,41 +150,45 @@ main {
 
 .filter-btn {
     padding: 10px 20px;
-    border: 2px solid #667eea;
+    border: 2px solid #FF8F00; /* Princeton Orange */
     background: white;
-    color: #667eea;
-    border-radius: 8px;
+    color: #FF8F00;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 500;
     transition: all 0.3s;
+    font-family: 'Georgia', serif;
 }
 
 .filter-btn:hover {
-    background: #f0f0f0;
+    background: #fff8f0;
 }
 
 .filter-btn.active {
-    background: #667eea;
+    background: #FF8F00; /* Princeton Orange */
     color: white;
 }
 
 .post-food-btn {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px 24px;
+    background: #FF8F00; /* Princeton Orange */
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 0.95rem;
     font-weight: 600;
     transition: all 0.3s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(255, 143, 0, 0.3);
+    font-family: 'Georgia', serif;
+    letter-spacing: 0.5px;
 }
 
 .post-food-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: #E77500; /* Darker orange on hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 143, 0, 0.4);
 }
 
 .content-wrapper {
@@ -191,10 +200,11 @@ main {
 }
 
 .map-container {
-    border-radius: 8px;
+    border-radius: 6px;
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     background: #f5f5f5;
+    border: 1px solid #e8e8e8;
 }
 
 #map {
@@ -227,16 +237,21 @@ main {
 .events-sidebar {
     display: flex;
     flex-direction: column;
-    background: #f9f9f9;
-    border-radius: 8px;
+    background: #fafafa;
+    border-radius: 6px;
     padding: 20px;
     overflow-y: auto;
+    border: 1px solid #e8e8e8;
 }
 
 .events-sidebar h2 {
     margin-bottom: 20px;
-    color: #333;
+    color: #1a1a1a;
     font-size: 1.5rem;
+    font-family: 'Georgia', serif;
+    font-weight: 600;
+    border-bottom: 2px solid #FF8F00;
+    padding-bottom: 10px;
 }
 
 .events-list {
@@ -247,16 +262,18 @@ main {
 
 .event-item {
     background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 18px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-left: 3px solid #FF8F00; /* Princeton Orange accent */
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
 }
 
 .event-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+    border-left-color: #E77500;
 }
 
 .event-header {
@@ -274,9 +291,10 @@ main {
 
 .event-time {
     font-size: 0.95rem;
-    color: #667eea;
+    color: #FF8F00; /* Princeton Orange */
     font-weight: 600;
     white-space: nowrap;
+    font-family: 'Georgia', serif;
 }
 
 .event-meta {
@@ -289,7 +307,7 @@ main {
 
 .event-date {
     font-size: 0.85rem;
-    color: #667eea;
+    color: #666;
     font-weight: 500;
     white-space: nowrap;
 }
@@ -297,7 +315,7 @@ main {
 .event-distance {
     font-size: 0.75rem;
     color: white;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #FF8F00; /* Princeton Orange */
     padding: 2px 8px;
     border-radius: 12px;
     font-weight: 600;
@@ -448,7 +466,8 @@ footer {
 .form-group input[type="text"]:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #FF8F00; /* Princeton Orange */
+    box-shadow: 0 0 0 3px rgba(255, 143, 0, 0.1);
 }
 
 .form-group small {
@@ -471,7 +490,7 @@ footer {
 .camera-btn {
     width: 100%;
     padding: 12px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #FF8F00; /* Princeton Orange */
     color: white;
     border: none;
     border-radius: 8px;
@@ -479,11 +498,13 @@ footer {
     font-size: 0.95rem;
     font-weight: 500;
     transition: transform 0.2s, box-shadow 0.2s;
+    font-family: 'Georgia', serif;
 }
 
 .camera-btn:hover {
+    background: #E77500;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 12px rgba(255, 143, 0, 0.4);
 }
 
 .photo-preview {
@@ -521,14 +542,16 @@ footer {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #FF8F00; /* Princeton Orange */
     color: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(255, 143, 0, 0.3);
+    font-family: 'Georgia', serif;
 }
 
 .btn-primary:hover:not(:disabled) {
+    background: #E77500;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 143, 0, 0.4);
 }
 
 .btn-primary:disabled {
@@ -538,12 +561,15 @@ footer {
 
 .btn-secondary {
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
+    color: #FF8F00; /* Princeton Orange */
+    border: 2px solid #FF8F00;
+    font-family: 'Georgia', serif;
 }
 
 .btn-secondary:hover {
-    background: #f0f0f0;
+    background: #fff8f0;
+    border-color: #E77500;
+    color: #E77500;
 }
 
 /* Responsive Design */
@@ -646,14 +672,6 @@ footer {
     border-color: #f5c6cb;
 }
 
-/* No events styling */
-.no-events {
-    text-align: center;
-    color: #666;
-    padding: 30px;
-    font-style: italic;
-}
-
 /* Camera Modal Styles */
 .camera-modal {
     z-index: 2000; /* Higher than other modals */
@@ -730,4 +748,3 @@ footer {
         width: 100%;
     }
 }
-

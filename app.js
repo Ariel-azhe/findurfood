@@ -665,21 +665,22 @@ window.disableCoordinatePicker = function() {
 // Make initMap globally accessible for Google Maps callback
 window.initMap = initMap;
 
-// Get marker color based on cuisine type
+// Get marker color based on cuisine type - using Princeton Orange variations
 function getMarkerColor(cuisine) {
-    if (!cuisine) return '#4285F4'; // Default blue
+    if (!cuisine) return '#FF8F00'; // Princeton Orange as default
     
+    // Use variations of Princeton Orange for different cuisines
     const colorMap = {
-        'Thai': '#FF6B6B',
-        'Italian': '#4ECDC4',
-        'Mexican': '#FFE66D',
-        'Chinese': '#FF6B9D',
-        'Japanese': '#C44569',
-        'Indian': '#F8B500',
-        'American': '#95E1D3'
+        'Thai': '#FF8F00',      // Princeton Orange
+        'Italian': '#FFA726',   // Lighter orange
+        'Mexican': '#FF9800',   // Orange
+        'Chinese': '#FFB74D',   // Light orange
+        'Japanese': '#FF8F00',  // Princeton Orange
+        'Indian': '#FF6F00',    // Darker orange
+        'American': '#FFA000'   // Medium orange
     };
     
-    return colorMap[cuisine] || '#4285F4';
+    return colorMap[cuisine] || '#FF8F00'; // Default to Princeton Orange
 }
 
 // Utility function to escape HTML
