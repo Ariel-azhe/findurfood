@@ -393,7 +393,12 @@ async function handleFormSubmit(e) {
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error || 'Failed to post event');
+            console.error('Server returned error:', error);
+            const errorMessage = error.details || error.error || 'Failed to post event';
+            if (error.hint) {
+                console.error('Hint:', error.hint);
+            }
+            throw new Error(errorMessage);
         }
 
         // Success - reload events and close modal

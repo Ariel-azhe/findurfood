@@ -98,8 +98,18 @@ app.post('/api/events', async (req, res) => {
             .single();
 
         if (error) {
-            console.error('Supabase error:', error);
-            return res.status(500).json({ error: 'Failed to create event', details: error.message });
+            console.error('Supabase error creating event:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code
+            });
+            return res.status(500).json({
+                error: 'Failed to create event',
+                details: error.message,
+                hint: error.hint,
+                code: error.code
+            });
         }
 
         res.status(201).json(data);
