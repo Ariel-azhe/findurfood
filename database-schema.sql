@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS free_food_events (
     location JSONB, -- Optional: Stores { "lat": number, "lng": number } for map display
     photo TEXT, -- Base64 encoded image string, null if no photo
     description TEXT, -- Optional: Additional description/details about the event
+    event_time TEXT, -- Event time in format like "9:00PM", "2:30PM", "11:00AM"
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
@@ -37,6 +38,9 @@ CREATE INDEX IF NOT EXISTS idx_free_food_events_room_number ON free_food_events(
 
 -- Create index on place_name for filtering
 CREATE INDEX IF NOT EXISTS idx_free_food_events_place_name ON free_food_events(place_name);
+
+-- Create index on event_time for sorting
+CREATE INDEX IF NOT EXISTS idx_free_food_events_event_time ON free_food_events(event_time);
 
 -- Function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

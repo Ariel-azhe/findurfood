@@ -63,7 +63,7 @@ app.get('/api/events/:id', async (req, res) => {
 // Create new event
 app.post('/api/events', async (req, res) => {
     try {
-        const { event_name, building, room_number, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
 
         // Validate required fields
         if (!event_name) {
@@ -91,7 +91,10 @@ app.post('/api/events', async (req, res) => {
                     diet_type: diet_type || null,
                     cuisine: cuisine || null,
                     location: location || null,
-                    photo: photo || null
+                    photo: photo || null,
+                    event_time: event_time || null,
+                    description: description || null,
+                    place_name: place_name || null
                 }
             ])
             .select()
@@ -123,7 +126,7 @@ app.post('/api/events', async (req, res) => {
 app.put('/api/events/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { event_name, building, room_number, diet_type, cuisine, location, photo } = req.body;
+        const { event_name, building, room_number, diet_type, cuisine, location, photo, event_time, description, place_name } = req.body;
 
         const updateData = {};
         if (event_name !== undefined) updateData.event_name = event_name;
@@ -133,6 +136,9 @@ app.put('/api/events/:id', async (req, res) => {
         if (cuisine !== undefined) updateData.cuisine = cuisine;
         if (location !== undefined) updateData.location = location;
         if (photo !== undefined) updateData.photo = photo;
+        if (event_time !== undefined) updateData.event_time = event_time;
+        if (description !== undefined) updateData.description = description;
+        if (place_name !== undefined) updateData.place_name = place_name;
 
         const { data, error } = await supabase
             .from('free_food_events')

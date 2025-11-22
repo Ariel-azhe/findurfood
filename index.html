@@ -41,10 +41,14 @@
                 <div class="search-bar">
                     <input type="text" id="searchInput" placeholder="Search events...">
                 </div>
-                <div class="filters">
-                    <button class="filter-btn active" data-filter="all">All</button>
-                    <button class="filter-btn" data-filter="today">Today</button>
-                    <button class="filter-btn" data-filter="this-week">This Week</button>
+                <div class="sort-controls">
+                    <label for="sortBy">Sort by:</label>
+                    <select id="sortBy" class="sort-dropdown">
+                        <option value="time-asc">Time (Earliest First)</option>
+                        <option value="time-desc">Time (Latest First)</option>
+                        <option value="distance">Distance (Nearest First)</option>
+                        <option value="name">Name (A-Z)</option>
+                    </select>
                 </div>
                 <button id="postFoodBtn" class="post-food-btn">+ Post Free Food</button>
             </div>

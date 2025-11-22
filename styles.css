@@ -95,6 +95,35 @@ main {
     min-width: 250px;
 }
 
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-controls label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.sort-dropdown {
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.3s;
+    min-width: 180px;
+}
+
+.sort-dropdown:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
 .search-bar input {
     width: 100%;
     padding: 12px 16px;
@@ -241,6 +270,13 @@ main {
     font-size: 1.1rem;
     color: #333;
     flex: 1;
+}
+
+.event-time {
+    font-size: 0.95rem;
+    color: #667eea;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .event-meta {

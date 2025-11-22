@@ -2,8 +2,8 @@
 const state = {
     events: [],
     filteredEvents: [],
-    currentFilter: 'all',
     searchQuery: '',
+    sortBy: 'time-asc', // Default sort by time ascending
     map: null,
     markers: [], // Store Google Maps markers for events
     buildingMarkers: [], // Store building markers
@@ -17,7 +17,7 @@ const elements = {
     searchInput: document.getElementById('searchInput'),
     eventsList: document.getElementById('eventsList'),
     map: document.getElementById('map'),
-    filterButtons: document.querySelectorAll('.filter-btn'),
+    sortBy: document.getElementById('sortBy'),
     postFoodBtn: document.getElementById('postFoodBtn'),
     postFoodModal: document.getElementById('postFoodModal'),
     postFoodForm: document.getElementById('postFoodForm'),
@@ -46,10 +46,7 @@ async function init() {
     filterEvents();
     renderEvents();
 
-    // Show location status message if there was an error
-    if (state.locationError) {
-        showLocationStatus(state.locationError);
-    }
+    // Location is optional - no need to show errors
 }
 
 // Show location status message to user
@@ -74,18 +71,11 @@ function setupEventListeners() {
         renderEvents();
     });
 
-    // Filter buttons
-    elements.filterButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            // Update active state
-            elements.filterButtons.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-
-            // Update filter
-            state.currentFilter = e.target.dataset.filter;
-            filterEvents();
-            renderEvents();
-        });
+    // Sort dropdown
+    elements.sortBy.addEventListener('change', (e) => {
+        state.sortBy = e.target.value;
+        filterEvents();
+        renderEvents();
     });
 
     // Post Free Food button
@@ -158,32 +148,8 @@ function filterEvents() {
         });
     }
 
-    // Apply date filter
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekFromNow = new Date(today);
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
 
-    switch (state.currentFilter) {
-        case 'today':
-            filtered = filtered.filter(event => {
-                const eventDate = new Date(event.created_at);
-                return eventDate >= today && eventDate < new Date(today.getTime() + 24 * 60 * 60 * 1000);
-            });
-            break;
-        case 'this-week':
-            filtered = filtered.filter(event => {
-                const eventDate = new Date(event.created_at);
-                return eventDate >= today && eventDate < weekFromNow;
-            });
-            break;
-        case 'all':
-        default:
-            // No date filtering
-            break;
-    }
-
-    // Calculate distance for each event and sort by distance if user location is available
+    // Calculate distance for each event if user location is available
     if (state.userLocation) {
         filtered = filtered.map(event => {
             let distance = null;
@@ -199,15 +165,29 @@ function filterEvents() {
             }
             return { ...event, distance };
         });
-
-        // Sort by distance (nearest first), events without distance go to end
-        filtered.sort((a, b) => {
-            if (a.distance === null && b.distance === null) return 0;
-            if (a.distance === null) return 1;
-            if (b.distance === null) return -1;
-            return a.distance - b.distance;
-        });
     }
+
+    // Sort events based on selected sort option
+    filtered.sort((a, b) => {
+        switch (state.sortBy) {
+            case 'time-asc':
+                return sortByTime(a, b, true);
+            case 'time-desc':
+                return sortByTime(a, b, false);
+            case 'distance':
+                if (!state.userLocation) return 0;
+                if (a.distance === null && b.distance === null) return 0;
+                if (a.distance === null) return 1;
+                if (b.distance === null) return -1;
+                return a.distance - b.distance;
+            case 'name':
+                const nameA = (a.event_name || '').toLowerCase();
+                const nameB = (b.event_name || '').toLowerCase();
+                return nameA.localeCompare(nameB);
+            default:
+                return 0;
+        }
+    });
 
     state.filteredEvents = filtered;
     updateMapMarkers(); // Update markers when filters change
@@ -221,7 +201,7 @@ function renderEvents() {
     }
 
     elements.eventsList.innerHTML = state.filteredEvents.map(event => {
-        const dateStr = formatDate(event.created_at || event.date);
+        const timeStr = event.event_time ? escapeHtml(event.event_time) : 'Time TBD';
         const location = event.building && event.room_number
             ? `${escapeHtml(event.building)}, Room ${escapeHtml(event.room_number)}`
             : event.building || event.room_number || 'Location not specified';
@@ -247,8 +227,8 @@ function renderEvents() {
                 <div class="event-header">
                     <h3>${escapeHtml(title)}</h3>
                     <div class="event-meta">
+                        <span class="event-time">${timeStr}</span>
                         ${distanceBadge}
-                        <span class="event-date">${dateStr}</span>
                     </div>
                 </div>
                 <p class="event-location">📍 ${location}</p>
@@ -275,6 +255,40 @@ function formatDate(date) {
     const d = new Date(date);
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return d.toLocaleDateString('en-US', options);
+}
+
+// Convert time string (e.g., "9:00PM") to minutes for sorting
+function timeToMinutes(timeStr) {
+    if (!timeStr) return Infinity; // Events without time go to end
+    
+    const match = timeStr.match(/(\d{1,2}):(\d{2})(AM|PM)/i);
+    if (!match) return Infinity;
+    
+    let hours = parseInt(match[1]);
+    const minutes = parseInt(match[2]);
+    const period = match[3].toUpperCase();
+    
+    // Convert to 24-hour format
+    if (period === 'PM' && hours !== 12) {
+        hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+        hours = 0;
+    }
+    
+    return hours * 60 + minutes;
+}
+
+// Sort by time
+function sortByTime(a, b, ascending = true) {
+    const timeA = timeToMinutes(a.event_time);
+    const timeB = timeToMinutes(b.event_time);
+    
+    // Events without time go to end
+    if (timeA === Infinity && timeB === Infinity) return 0;
+    if (timeA === Infinity) return 1;
+    if (timeB === Infinity) return -1;
+    
+    return ascending ? timeA - timeB : timeB - timeA;
 }
 
 // Focus on event (for map interaction)
@@ -803,26 +817,28 @@ function getUserLocation() {
                 resolve(state.userLocation);
             },
             (error) => {
+                // Don't show error messages - location is optional
+                // Only log for debugging
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        state.locationError = 'Location permission denied';
+                        console.log('Location permission denied - distance sorting disabled');
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        state.locationError = 'Location information unavailable';
+                        console.log('Location unavailable - distance sorting disabled');
                         break;
                     case error.TIMEOUT:
-                        state.locationError = 'Location request timed out';
+                        console.log('Location request timed out - distance sorting disabled');
                         break;
                     default:
-                        state.locationError = 'Unknown location error';
+                        console.log('Location error - distance sorting disabled');
                 }
-                console.warn('Geolocation error:', state.locationError);
+                state.locationError = null; // Don't set error, just silently fail
                 resolve(null);
             },
             {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 300000 // Cache location for 5 minutes
+                enableHighAccuracy: false, // Less strict - use IP-based location if GPS unavailable
+                timeout: 5000, // Shorter timeout
+                maximumAge: 60000 // Cache location for 1 minute
             }
         );
     });
