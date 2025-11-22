@@ -31,6 +31,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: transparent;
 }
 
 .logo-full {
@@ -38,6 +39,8 @@ header {
     height: auto;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
     transition: transform 0.3s ease;
+    background: transparent;
+    mix-blend-mode: normal;
 }
 
 .logo-full:hover {
