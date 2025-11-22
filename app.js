@@ -345,16 +345,16 @@ function timeToMinutes(timeStr) {
     return hours * 60 + minutes;
 }
 
-// Sort by time
+// Sort by time (using created_at timestamp)
 function sortByTime(a, b, ascending = true) {
-    const timeA = timeToMinutes(a.event_time);
-    const timeB = timeToMinutes(b.event_time);
-    
-    // Events without time go to end
+    const timeA = a.created_at ? new Date(a.created_at).getTime() : Infinity;
+    const timeB = b.created_at ? new Date(b.created_at).getTime() : Infinity;
+
+    // Events without timestamp go to end
     if (timeA === Infinity && timeB === Infinity) return 0;
     if (timeA === Infinity) return 1;
     if (timeB === Infinity) return -1;
-    
+
     return ascending ? timeA - timeB : timeB - timeA;
 }
 
