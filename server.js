@@ -1,38 +1,168 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+require('dotenv').config();
+const supabase = require('./supabase');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increased limit for base64 images
 app.use(express.static(path.join(__dirname)));
 
 // API Routes
-app.get('/api/events', (req, res) => {
-    // Placeholder data - replace with actual data source
-    const events = [
-        {
-            id: 1,
-            title: 'Sample Free Food Event',
-            date: new Date('2024-01-15').toISOString(),
-            location: 'Frist Campus Center',
-            description: 'Free pizza and drinks available for all students.',
-            coordinates: { lat: 40.3480, lng: -74.6550 }
-        },
-        {
-            id: 2,
-            title: 'Another Event',
-            date: new Date('2024-01-16').toISOString(),
-            location: 'Nassau Hall',
-            description: 'Free lunch buffet with vegetarian options.',
-            coordinates: { lat: 40.3487, lng: -74.6590 }
+
+// Get all events
+app.get('/api/events', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('free_food_events')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Failed to fetch events', details: error.message });
         }
-    ];
-    
-    res.json(events);
+
+        res.json(data || []);
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// Get single event by ID
+app.get('/api/events/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data, error } = await supabase
+            .from('free_food_events')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Failed to fetch event', details: error.message });
+        }
+
+        if (!data) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        res.json(data);
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// Create new event
+app.post('/api/events', async (req, res) => {
+    try {
+        const { event_name, diet_type, cuisine, location, photo } = req.body;
+
+        // Validate required fields
+        if (!event_name || !location) {
+            return res.status(400).json({ 
+                error: 'Missing required fields', 
+                required: ['event_name', 'location'] 
+            });
+        }
+
+        // Validate location format (should have lat and lng)
+        if (!location.lat || !location.lng) {
+            return res.status(400).json({ 
+                error: 'Invalid location format', 
+                expected: { lat: 'number', lng: 'number' } 
+            });
+        }
+
+        const { data, error } = await supabase
+            .from('free_food_events')
+            .insert([
+                {
+                    event_name,
+                    diet_type: diet_type || null,
+                    cuisine: cuisine || null,
+                    location,
+                    photo: photo || null
+                }
+            ])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Failed to create event', details: error.message });
+        }
+
+        res.status(201).json(data);
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// Update event
+app.put('/api/events/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { event_name, diet_type, cuisine, location, photo } = req.body;
+
+        const updateData = {};
+        if (event_name !== undefined) updateData.event_name = event_name;
+        if (diet_type !== undefined) updateData.diet_type = diet_type;
+        if (cuisine !== undefined) updateData.cuisine = cuisine;
+        if (location !== undefined) updateData.location = location;
+        if (photo !== undefined) updateData.photo = photo;
+
+        const { data, error } = await supabase
+            .from('free_food_events')
+            .update(updateData)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Failed to update event', details: error.message });
+        }
+
+        if (!data) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        res.json(data);
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
+// Delete event
+app.delete('/api/events/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { error } = await supabase
+            .from('free_food_events')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Supabase error:', error);
+            return res.status(500).json({ error: 'Failed to delete event', details: error.message });
+        }
+
+        res.json({ message: 'Event deleted successfully' });
+    } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
 });
 
 app.get('/api/health', (req, res) => {
