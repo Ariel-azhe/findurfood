@@ -5,7 +5,8 @@ const state = {
     currentFilter: 'all',
     searchQuery: '',
     map: null,
-    markers: [] // Store Google Maps markers
+    markers: [], // Store Google Maps markers for events
+    buildingMarkers: [] // Store building markers
 };
 
 // DOM Elements
@@ -208,7 +209,7 @@ function initMap() {
         lng: (princetonBounds.east + princetonBounds.west) / 2
     };
 
-    // Initialize map with custom styles to hide street labels
+    // Initialize map with custom styles - hide most labels but show street labels
     const mapStyles = [
         {
             featureType: "all",
@@ -223,12 +224,22 @@ function initMap() {
         {
             featureType: "road",
             elementType: "labels",
-            stylers: [{ visibility: "off" }]
+            stylers: [{ visibility: "on" }] // Show street labels
         },
         {
             featureType: "transit",
             elementType: "labels",
             stylers: [{ visibility: "off" }]
+        },
+        {
+            featureType: "road",
+            elementType: "labels.text.fill",
+            stylers: [{ color: "#333333" }] // Dark text for street labels
+        },
+        {
+            featureType: "road",
+            elementType: "labels.text.stroke",
+            stylers: [{ color: "#ffffff" }] // White outline for readability
         }
     ];
 
@@ -249,6 +260,9 @@ function initMap() {
     
     // Fit map to Princeton campus bounds
     state.map.fitBounds(bounds);
+
+    // Add building labels
+    addBuildingLabels();
 
     // If events are already loaded, add markers now
     if (state.events.length > 0) {
@@ -361,6 +375,99 @@ function updateMapMarkers() {
         state.map.fitBounds(campusBounds);
     }
 }
+
+// Add building labels to the map
+function addBuildingLabels() {
+    if (!state.map) return;
+
+    // Clear existing building markers
+    state.buildingMarkers.forEach(marker => marker.setMap(null));
+    state.buildingMarkers = [];
+
+    // Princeton building locations
+    const buildings = [
+        { name: 'Butler', lat: 40.344288874358114, lng: -74.65565285584785 },
+        { name: 'Forbes', lat: 40.342046353353346, lng: -74.66126895549922 },
+        { name: 'Mathey', lat: 40.348176659002405, lng: -74.66139263402692 },
+        { name: 'NCW', lat: 40.34191339182642, lng: -74.65493571862864 },
+        { name: 'Rocky', lat: 40.34781688299055, lng: -74.65999252092115 },
+        { name: 'Whitman', lat: 40.34382114812386, lng: -74.65797149877174 },
+        { name: 'Yeh', lat: 40.3420851183729, lng: -74.6543885479896 },
+        { name: 'E-quad', lat: 40.35058252612208, lng: -74.65100727250744 },
+        { name: 'Nassau Hall', lat: 40.34870422311764, lng: -74.65932116334781 },
+        { name: 'Frist', lat: 40.346017330234716, lng: -74.65549043275146 },
+        { name: 'Fine Hall', lat: 40.345825920837996, lng: -74.65246533124001 }
+    ];
+
+    buildings.forEach(building => {
+        // Create marker with text label - using invisible marker with visible label
+        const marker = new google.maps.Marker({
+            position: { lat: building.lat, lng: building.lng },
+            map: state.map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 0, // Invisible marker, just for positioning
+                fillOpacity: 0,
+                strokeOpacity: 0
+            },
+            label: {
+                text: building.name,
+                color: '#1a1a1a',
+                fontSize: '13px',
+                fontWeight: 'bold'
+            },
+            zIndex: 1, // Below event markers
+            optimized: false // Keep labels visible
+        });
+
+        state.buildingMarkers.push(marker);
+    });
+}
+
+// Helper function to get coordinates by clicking on the map
+// Usage: Open browser console and type: enableCoordinatePicker()
+window.enableCoordinatePicker = function() {
+    if (!state.map) {
+        console.error('Map not initialized yet');
+        return;
+    }
+    
+    console.log('✅ Coordinate picker enabled! Click anywhere on the map to get coordinates.');
+    console.log('Click the map and coordinates will be logged to console.');
+    console.log('Type disableCoordinatePicker() to stop.');
+    
+    const clickListener = state.map.addListener('click', (event) => {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        console.log(`Coordinates: { lat: ${lat}, lng: ${lng} }`);
+        console.log(`Copy this: lat: ${lat}, lng: ${lng}`);
+        
+        // Also show a marker temporarily
+        const tempMarker = new google.maps.Marker({
+            position: { lat, lng },
+            map: state.map,
+            label: {
+                text: '📍',
+                fontSize: '20px'
+            },
+            title: `${lat}, ${lng}`
+        });
+        
+        // Remove marker after 3 seconds
+        setTimeout(() => tempMarker.setMap(null), 3000);
+    });
+    
+    // Store listener so we can remove it later
+    window._coordinatePickerListener = clickListener;
+};
+
+window.disableCoordinatePicker = function() {
+    if (window._coordinatePickerListener) {
+        google.maps.event.removeListener(window._coordinatePickerListener);
+        window._coordinatePickerListener = null;
+        console.log('✅ Coordinate picker disabled');
+    }
+};
 
 // Make initMap globally accessible for Google Maps callback
 window.initMap = initMap;
