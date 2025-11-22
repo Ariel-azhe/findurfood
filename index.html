@@ -216,6 +216,69 @@
         </div>
     </div>
 
+    <!-- Notification Preferences Modal -->
+    <div id="notificationPreferencesModal" class="modal">
+        <div class="modal-content preferences-modal-content">
+            <div class="modal-header">
+                <h2>Welcome to HungryTigers!</h2>
+                <span class="close-preferences-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="preferences-intro">Help us personalize your free food experience! Set your preferences below.</p>
+
+                <div class="preference-section">
+                    <h3>Notifications</h3>
+                    <label class="toggle-container">
+                        <input type="checkbox" id="enableNotifications" name="enableNotifications">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Notify me about nearby free food events</span>
+                    </label>
+                </div>
+
+                <div class="preference-section">
+                    <h3>Dietary Restrictions</h3>
+                    <p class="preference-description">Select the diet types you're interested in:</p>
+                    <div class="diet-options-grid">
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="dietPreference" value="vegetarian">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Vegetarian</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="dietPreference" value="vegan">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Vegan</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="dietPreference" value="gluten-free">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Gluten-Free</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="dietPreference" value="halal">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Halal</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="dietPreference" value="kosher">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">Kosher</span>
+                        </label>
+                        <label class="checkbox-container">
+                            <input type="checkbox" name="dietPreference" value="no-restriction" checked>
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">No Restriction (Show All)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="skipPreferencesBtn" class="btn-secondary">Skip for Now</button>
+                <button type="button" id="savePreferencesBtn" class="btn-primary">Save Preferences</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script>
         // Update food percentage value display as user slides

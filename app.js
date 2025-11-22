@@ -10,7 +10,12 @@ const state = {
     userLocationMarker: null, // User's location marker
     userLocation: null, // { lat: number, lng: number }
     locationError: null,
-    currentInfoWindow: null // Currently open info window on map
+    currentInfoWindow: null, // Currently open info window on map
+    userPreferences: {
+        notificationsEnabled: false,
+        dietPreferences: ['no-restriction'], // Default to show all
+        hasSeenPreferencesModal: false
+    }
 };
 
 // DOM Elements
@@ -32,7 +37,13 @@ const elements = {
     cameraCanvas: document.getElementById('cameraCanvas'),
     captureBtn: document.getElementById('captureBtn'),
     closeCameraBtn: document.getElementById('closeCameraBtn'),
-    closeCameraModal: document.querySelector('.close-camera-modal')
+    closeCameraModal: document.querySelector('.close-camera-modal'),
+    // Notification preferences modal elements
+    preferencesModal: document.getElementById('notificationPreferencesModal'),
+    closePreferencesModal: document.querySelector('.close-preferences-modal'),
+    enableNotifications: document.getElementById('enableNotifications'),
+    savePreferencesBtn: document.getElementById('savePreferencesBtn'),
+    skipPreferencesBtn: document.getElementById('skipPreferencesBtn')
 };
 
 // Camera state
@@ -41,7 +52,12 @@ let capturedPhotoBlob = null;
 
 // Initialize the application
 async function init() {
+    // Load user preferences from localStorage
+    loadUserPreferences();
+
     setupEventListeners();
+    setupPreferencesModalListeners();
+
     // Map will be initialized by Google Maps callback
     // If callback already fired, initialize manually
     if (typeof google !== 'undefined' && google.maps) {
@@ -57,6 +73,11 @@ async function init() {
     filterEvents();
     renderEvents();
 
+    // Show preferences modal on first visit
+    if (!state.userPreferences.hasSeenPreferencesModal) {
+        showPreferencesModal();
+    }
+
     // Location is optional - no need to show errors
 }
 
@@ -71,6 +92,146 @@ function showLocationStatus(message) {
             statusEl.style.display = 'none';
         }, 5000);
     }
+}
+
+// Load user preferences from localStorage
+function loadUserPreferences() {
+    try {
+        const savedPreferences = localStorage.getItem('hungryTigersPreferences');
+        if (savedPreferences) {
+            const parsed = JSON.parse(savedPreferences);
+            state.userPreferences = { ...state.userPreferences, ...parsed };
+        }
+    } catch (error) {
+        console.error('Error loading user preferences:', error);
+    }
+}
+
+// Save user preferences to localStorage
+function saveUserPreferences() {
+    try {
+        localStorage.setItem('hungryTigersPreferences', JSON.stringify(state.userPreferences));
+    } catch (error) {
+        console.error('Error saving user preferences:', error);
+    }
+}
+
+// Show the preferences modal
+function showPreferencesModal() {
+    if (elements.preferencesModal) {
+        // Restore saved preferences to the form
+        if (elements.enableNotifications) {
+            elements.enableNotifications.checked = state.userPreferences.notificationsEnabled;
+        }
+
+        // Restore diet preferences checkboxes
+        const dietCheckboxes = document.querySelectorAll('input[name="dietPreference"]');
+        dietCheckboxes.forEach(checkbox => {
+            checkbox.checked = state.userPreferences.dietPreferences.includes(checkbox.value);
+        });
+
+        elements.preferencesModal.style.display = 'flex';
+    }
+}
+
+// Close the preferences modal
+function closePreferencesModalFn() {
+    if (elements.preferencesModal) {
+        elements.preferencesModal.style.display = 'none';
+    }
+}
+
+// Set up event listeners for the preferences modal
+function setupPreferencesModalListeners() {
+    // Close modal button
+    if (elements.closePreferencesModal) {
+        elements.closePreferencesModal.addEventListener('click', () => {
+            closePreferencesModalFn();
+        });
+    }
+
+    // Skip button - just close and mark as seen
+    if (elements.skipPreferencesBtn) {
+        elements.skipPreferencesBtn.addEventListener('click', () => {
+            state.userPreferences.hasSeenPreferencesModal = true;
+            saveUserPreferences();
+            closePreferencesModalFn();
+        });
+    }
+
+    // Save preferences button
+    if (elements.savePreferencesBtn) {
+        elements.savePreferencesBtn.addEventListener('click', () => {
+            // Get notification preference
+            state.userPreferences.notificationsEnabled = elements.enableNotifications?.checked || false;
+
+            // Get diet preferences
+            const dietCheckboxes = document.querySelectorAll('input[name="dietPreference"]:checked');
+            const selectedDiets = Array.from(dietCheckboxes).map(cb => cb.value);
+
+            // If no diet is selected, default to no-restriction
+            state.userPreferences.dietPreferences = selectedDiets.length > 0 ? selectedDiets : ['no-restriction'];
+
+            // Mark as seen
+            state.userPreferences.hasSeenPreferencesModal = true;
+
+            // Save to localStorage
+            saveUserPreferences();
+
+            // Request notification permission if enabled
+            if (state.userPreferences.notificationsEnabled && 'Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        console.log('Notification permission granted');
+                    }
+                });
+            }
+
+            // Re-filter events with new preferences
+            filterEvents();
+            renderEvents();
+
+            // Close modal
+            closePreferencesModalFn();
+        });
+    }
+
+    // Close modal when clicking outside
+    if (elements.preferencesModal) {
+        window.addEventListener('click', (e) => {
+            if (e.target === elements.preferencesModal) {
+                closePreferencesModalFn();
+            }
+        });
+    }
+
+    // Handle "No Restriction" checkbox logic - when checked, it should uncheck others
+    const noRestrictionCheckbox = document.querySelector('input[name="dietPreference"][value="no-restriction"]');
+    const otherDietCheckboxes = document.querySelectorAll('input[name="dietPreference"]:not([value="no-restriction"])');
+
+    if (noRestrictionCheckbox) {
+        noRestrictionCheckbox.addEventListener('change', () => {
+            if (noRestrictionCheckbox.checked) {
+                // Uncheck all other diet options
+                otherDietCheckboxes.forEach(cb => cb.checked = false);
+            }
+        });
+    }
+
+    otherDietCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked && noRestrictionCheckbox) {
+                // Uncheck "No Restriction" when another option is selected
+                noRestrictionCheckbox.checked = false;
+            }
+
+            // If no options are checked, re-check "No Restriction"
+            const anyChecked = Array.from(otherDietCheckboxes).some(cb => cb.checked);
+            if (!anyChecked && noRestrictionCheckbox) {
+                noRestrictionCheckbox.checked = true;
+            }
+        });
+    });
 }
 
 // Set up event listeners
@@ -328,6 +489,16 @@ function filterEvents() {
         });
     }
 
+    // Apply diet preference filter
+    const dietPrefs = state.userPreferences.dietPreferences || ['no-restriction'];
+    if (!dietPrefs.includes('no-restriction')) {
+        filtered = filtered.filter(event => {
+            const eventDiet = (event.diet_type || '').toLowerCase();
+            // Show events that match any of the user's diet preferences
+            // Also show events with no restriction as they're suitable for everyone
+            return dietPrefs.includes(eventDiet) || eventDiet === 'no-restriction' || eventDiet === '';
+        });
+    }
 
     // Calculate distance for each event if user location is available
     if (state.userLocation) {
